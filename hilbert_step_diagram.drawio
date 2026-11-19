@@ -1,0 +1,146 @@
+<mxfile host="app.diagrams.net" modified="2026-11-18T05:45:00.000Z" agent="Mozilla/5.0" version="24.7.5">
+  <diagram name="Hilbert Transformation Pipeline" id="hilbert-pipeline-diagram">
+    <mxGraphModel dx="1422" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="1" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title Banner -->
+        <mxCell id="title_box" value="&lt;b style=&quot;font-size: 20px;&quot;&gt;PIPELINE TRANSFORMASI LOSSLESS HILBERT 1D-KE-2D &amp;amp; IEEE 754 BIT-PACKING&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 13px; color: #555555;&quot;&gt;Representasi Sinyal EEG 1D Menjadi Kontainer Citra 2D (32×32) dan Tensor Masukan AI Bebas Galat (Zero-Loss)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#D0D7DE;strokeWidth=2;shadow=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="30" width="1000" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT NODE -->
+        <mxCell id="node_input" value="&lt;b style=&quot;font-size: 15px; color: #0D47A1;&quot;&gt;INPUT: Sinyal EEG 1D Terkontaminasi / Mentah&lt;/b&gt;&lt;br/&gt;&lt;hr style=&quot;border: 0.5px solid #BBDEFB;&quot;/&gt;&lt;div style=&quot;text-align: left; font-size: 12px;&quot;&gt;• Vektor Sinyal: &lt;b&gt;x = [x&lt;sub&gt;0&lt;/sub&gt;, x&lt;sub&gt;1&lt;/sub&gt;, ..., x&lt;sub&gt;N-1&lt;/sub&gt;]&lt;sup&gt;T&lt;/sup&gt; ∈ ℝ&lt;sup&gt;N&lt;/sup&gt;&lt;/b&gt;&lt;br/&gt;• Tipe Data: &lt;b&gt;float32&lt;/b&gt; (IEEE 754 Single-Precision, 4 Byte/sampel)&lt;br/&gt;• Panjang Dinamis: &lt;b&gt;1 ≤ N ≤ 1023&lt;/b&gt; (Contoh: N = 512 titik sampel, f&lt;sub&gt;s&lt;/sub&gt; = 256 Hz)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1976D2;strokeWidth=2;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="140" width="480" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 1 CONTAINER -->
+        <mxCell id="step1_group" value="&lt;b style=&quot;font-size: 13px; color: #004D40;&quot;&gt;LANGKAH 1: Pemetaan Spasial Kurva Fraktal Hilbert Orde-5 (k = 5, Grid 32×32)&lt;/b&gt;" style="swimlane;startSize=28;rounded=1;arcSize=8;fillColor=#E0F2F1;strokeColor=#00897B;strokeWidth=2;shadow=1;fontStyle=0;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="270" width="900" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="step1_sub1" value="&lt;b&gt;Indeks Waktu 1D (d)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px; color: #333;&quot;&gt;d ∈ {0, 1, ..., 1023}&lt;br/&gt;Mencakup domain deret temporal secara kontinu&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4DB6AC;strokeWidth=1.5;fontColor=#004D40;" vertex="1" parent="step1_group">
+          <mxGeometry x="30" y="45" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="step1_sub2" value="&lt;b&gt;Generator Koordinat Rekursif Hilbert&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Dekomposisi Bit &amp;amp; Rotasi Kuadran:&lt;br/&gt;&lt;i&gt;rx = 1 &amp;amp; (d/2), ry = 1 &amp;amp; (d ⊕ rx)&lt;/i&gt;&lt;br/&gt;Rotasi Kuadran &lt;b&gt;R(s, x, y, rx, ry)&lt;/b&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B2DFDB;strokeColor=#00796B;strokeWidth=1.5;fontColor=#004D40;" vertex="1" parent="step1_group">
+          <mxGeometry x="320" y="40" width="260" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="step1_sub3" value="&lt;b&gt;Koordinat 2D (rows[d], cols[d])&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px; color: #004D40;&quot;&gt;Grid Konstan: &lt;b&gt;32 × 32 (1024 Sel)&lt;/b&gt;&lt;br/&gt;&lt;b style=&quot;color: #D84315;&quot;&gt;Sifat: Jarak Manhattan = 1&lt;/b&gt;&lt;br/&gt;||p&lt;sub&gt;t&lt;/sub&gt; - p&lt;sub&gt;t+1&lt;/sub&gt;||&lt;sub&gt;1&lt;/sub&gt; = |r&lt;sub&gt;t&lt;/sub&gt; - r&lt;sub&gt;t+1&lt;/sub&gt;| + |c&lt;sub&gt;t&lt;/sub&gt; - c&lt;sub&gt;t+1&lt;/sub&gt;| = 1&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#4DB6AC;strokeWidth=1.5;" vertex="1" parent="step1_group">
+          <mxGeometry x="640" y="40" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s1_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#00796B;" edge="1" source="step1_sub1" target="step1_sub2" parent="step1_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s1_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#00796B;" edge="1" source="step1_sub2" target="step1_sub3" parent="step1_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 2 CONTAINER -->
+        <mxCell id="step2_group" value="&lt;b style=&quot;font-size: 13px; color: #E65100;&quot;&gt;LANGKAH 2: Lossless IEEE 754 Bit-Packing ke 4 Kanal Warna Piksel RGBA (uint8)&lt;/b&gt;" style="swimlane;startSize=28;rounded=1;arcSize=8;fillColor=#FFF3E0;strokeColor=#FB8C00;strokeWidth=2;shadow=1;fontStyle=0;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="460" width="900" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="step2_sub1" value="&lt;b&gt;Sampel EEG (x&lt;sub&gt;t&lt;/sub&gt;)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;1 Nilai &lt;b&gt;float32&lt;/b&gt;&lt;br/&gt;Tanda: 1 bit&lt;br/&gt;Eksponen: 8 bit&lt;br/&gt;Mantisa: 23 bit&lt;br/&gt;&lt;b&gt;Total = 4 Byte (32 bit)&lt;/b&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFA726;strokeWidth=1.5;" vertex="1" parent="step2_group">
+          <mxGeometry x="30" y="40" width="200" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="step2_sub2" value="&lt;b&gt;Operasi Bit-Casting (Type Punning)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-family: monospace; font-size: 11px;&quot;&gt;view(np.uint8)&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px; color: #555;&quot;&gt;Tanpa transformasi numerik,&lt;br/&gt;tanpa kuantisasi, &amp;amp; tanpa galat desimal&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#F57C00;strokeWidth=1.5;" vertex="1" parent="step2_group">
+          <mxGeometry x="290" y="45" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="step2_sub3" value="&lt;b&gt;Pengepakan Piksel RGBA (32-bit)&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align: left; font-size: 11px; padding-left: 10px;&quot;&gt;&lt;span style=&quot;color: #D32F2F;&quot;&gt;• Red (R)&lt;/span&gt; : Byte 0 (uint8)&lt;br/&gt;&lt;span style=&quot;color: #388E3C;&quot;&gt;• Green (G)&lt;/span&gt; : Byte 1 (uint8)&lt;br/&gt;&lt;span style=&quot;color: #1976D2;&quot;&gt;• Blue (B)&lt;/span&gt; : Byte 2 (uint8)&lt;br/&gt;&lt;span style=&quot;color: #7B1FA2;&quot;&gt;• Alpha (A)&lt;/span&gt; : Byte 3 (uint8)&lt;/div&gt;&lt;span style=&quot;font-size: 10px; color: #E65100;&quot;&gt;Dialokasikan ke sel (rows[t], cols[t])&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFA726;strokeWidth=1.5;" vertex="1" parent="step2_group">
+          <mxGeometry x="570" y="37" width="300" height="98" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s2_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;" edge="1" source="step2_sub1" target="step2_sub2" parent="step2_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s2_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57C00;" edge="1" source="step2_sub2" target="step2_sub3" parent="step2_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 3 CONTAINER -->
+        <mxCell id="step3_group" value="&lt;b style=&quot;font-size: 13px; color: #311B92;&quot;&gt;LANGKAH 3: Injeksi Metadata Panjang Sinyal (N) pada Piksel Terminal Fraktal&lt;/b&gt;" style="swimlane;startSize=28;rounded=1;arcSize=8;fillColor=#EDE7F6;strokeColor=#7E57C2;strokeWidth=2;shadow=1;fontStyle=0;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="650" width="900" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="step3_sub1" value="&lt;b&gt;Pemisahan Wilayah Grid 32×32&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• &lt;b&gt;d = 0 .. (N-1):&lt;/b&gt; Sinyal Aktif EEG&lt;br/&gt;• &lt;b&gt;d = N .. 1022:&lt;/b&gt; Zero-Padding [0, 0, 0, 0]&lt;br/&gt;• &lt;b&gt;d = 1023:&lt;/b&gt; Terminal Metadata Piksel&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9575CD;strokeWidth=1.5;" vertex="1" parent="step3_group">
+          <mxGeometry x="30" y="42" width="240" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="step3_sub2" value="&lt;b&gt;Injeksi Piksel Terminal d = 1023&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Koordinat Hilbert: &lt;b&gt;(rows[-1], cols[-1]) = (0, 31)&lt;/b&gt;&lt;br/&gt;&lt;i&gt;I[0, 31, :] = view_uint8(uint32(N))&lt;/i&gt;&lt;br/&gt;Menyimpan integer panjang sinyal asli &lt;b&gt;N&lt;/b&gt; (4 Byte)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D1C4E9;strokeColor=#512DA8;strokeWidth=1.5;fontColor=#311B92;" vertex="1" parent="step3_group">
+          <mxGeometry x="320" y="42" width="270" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="step3_sub3" value="&lt;b&gt;Kontainer PNG Mandiri (Self-Contained)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Berkas citra PNG &lt;b&gt;32×32×4 RGBA&lt;/b&gt;&lt;br/&gt;Dapat disimpan/dikirim tanpa berkas JSON/header pendamping untuk mengetahui panjang N&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9575CD;strokeWidth=1.5;" vertex="1" parent="step3_group">
+          <mxGeometry x="640" y="42" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s3_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#512DA8;" edge="1" source="step3_sub1" target="step3_sub2" parent="step3_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s3_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#512DA8;" edge="1" source="step3_sub2" target="step3_sub3" parent="step3_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 4 CONTAINER -->
+        <mxCell id="step4_group" value="&lt;b style=&quot;font-size: 13px; color: #1B5E20;&quot;&gt;LANGKAH 4: Konversi ke Tensor Masukan Model AI (Dual-Channel Grid float32)&lt;/b&gt;" style="swimlane;startSize=28;rounded=1;arcSize=8;fillColor=#E8F5E9;strokeColor=#43A047;strokeWidth=2;shadow=1;fontStyle=0;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="840" width="900" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="step4_sub1" value="&lt;b&gt;Citra PNG Lossless Container&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Array uint8 (32 × 32 × 4)&lt;br/&gt;&lt;b style=&quot;color: #C62828;&quot;&gt;PERINGATAN TEORETIS:&lt;/b&gt;&lt;br/&gt;Model AI TIDAK mengonvolusi byte RGBA secara langsung!&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#81C784;strokeWidth=1.5;" vertex="1" parent="step4_group">
+          <mxGeometry x="30" y="42" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="step4_sub2" value="&lt;b&gt;Dual-Channel Grid Extractor&lt;/b&gt;&lt;br/&gt;&lt;div style=&quot;text-align: left; font-size: 11px;&quot;&gt;• &lt;b&gt;Kanal 0 (Signal Plane):&lt;/b&gt; Amplitudo riil x&lt;sub&gt;t&lt;/sub&gt; pada jalur Hilbert, 0.0 pada padding&lt;br/&gt;• &lt;b&gt;Kanal 1 (Active Mask):&lt;/b&gt; 1.0 pada piksel aktif sinyal (t &amp;lt; N), 0.0 pada padding/metadata&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#2E7D32;strokeWidth=1.5;fontColor=#1B5E20;" vertex="1" parent="step4_group">
+          <mxGeometry x="310" y="37" width="280" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="step4_sub3" value="&lt;b&gt;Tensor Masukan AI (2 × 32 × 32)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Siap diumpankan ke &lt;b&gt;2D Res-UNet&lt;/b&gt;&lt;br/&gt;Masker Kanal 1 mencegah distorsi normalisasi spasial pada area padding&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#81C784;strokeWidth=1.5;" vertex="1" parent="step4_group">
+          <mxGeometry x="640" y="42" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s4_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2E7D32;" edge="1" source="step4_sub1" target="step4_sub2" parent="step4_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s4_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#2E7D32;" edge="1" source="step4_sub2" target="step4_sub3" parent="step4_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 5 CONTAINER -->
+        <mxCell id="step5_group" value="&lt;b style=&quot;font-size: 13px; color: #880E4F;&quot;&gt;LANGKAH 5: Rekonstruksi Sinyal Invers 100% Bit-Exact (Inverse Decoding)&lt;/b&gt;" style="swimlane;startSize=28;rounded=1;arcSize=8;fillColor=#FCE4EC;strokeColor=#D81B60;strokeWidth=2;shadow=1;fontStyle=0;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="1030" width="900" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="step5_sub1" value="&lt;b&gt;Ekstraksi Panjang (N)&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Baca 4 byte pada piksel (0, 31):&lt;br/&gt;&lt;i&gt;N = view_uint32(I[0, 31, :])[0]&lt;/i&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F06292;strokeWidth=1.5;" vertex="1" parent="step5_group">
+          <mxGeometry x="30" y="45" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="step5_sub2" value="&lt;b&gt;Pengambilan Byte Jalur Hilbert&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px;&quot;&gt;Ambil N sel pertama:&lt;br/&gt;&lt;i&gt;bytes = I[rows[:N], cols[:N], :]&lt;/i&gt;&lt;br/&gt;Tepat N × 4 Byte&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8BBD0;strokeColor=#C2185B;strokeWidth=1.5;fontColor=#880E4F;" vertex="1" parent="step5_group">
+          <mxGeometry x="310" y="45" width="260" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="step5_sub3" value="&lt;b&gt;Type Punning ke float32&lt;/b&gt;&lt;br/&gt;&lt;span style=&quot;font-family: monospace; font-size: 11px;&quot;&gt;bytes.view(&quot;&amp;lt;f4&quot;)&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot;font-size: 11px; color: #555;&quot;&gt;Rekonstruksi presisi bit asal tanpa galat pembulatan&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#F06292;strokeWidth=1.5;" vertex="1" parent="step5_group">
+          <mxGeometry x="640" y="45" width="230" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s5_1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#C2185B;" edge="1" source="step5_sub1" target="step5_sub2" parent="step5_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_s5_2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#C2185B;" edge="1" source="step5_sub2" target="step5_sub3" parent="step5_group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- OUTPUT FINAL NODE -->
+        <mxCell id="node_output" value="&lt;b style=&quot;font-size: 15px; color: #1B5E20;&quot;&gt;OUTPUT: Sinyal EEG 1D Hasil Rekonstruksi (x̂ ∈ ℝ&lt;sup&gt;N&lt;/sup&gt;)&lt;/b&gt;&lt;br/&gt;&lt;hr style=&quot;border: 0.5px solid #C8E6C9;&quot;/&gt;&lt;div style=&quot;text-align: center; font-size: 12px;&quot;&gt;&lt;b style=&quot;color: #2E7D32;&quot;&gt;HASIL VERIFIKASI ZERO-LOSS ANALITIK:&lt;/b&gt;&lt;br/&gt;• Max Absolute Error: &lt;b&gt;max |x - x̂| = 0.000 × 10&lt;sup&gt;0&lt;/sup&gt;&lt;/b&gt;&lt;br/&gt;• Root Mean Squared Error: &lt;b&gt;RMSE = 0.000&lt;/b&gt; | Korelasi Pearson: &lt;b&gt;r = 1.0000000000&lt;/b&gt;&lt;br/&gt;• Identitas Bit-Level: &lt;b style=&quot;color: #00796B;&quot;&gt;np.array_equal(x, x̂) ≡ TRUE (100% Bit-Exact Identical)&lt;/b&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2.5;shadow=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="340" y="1220" width="520" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- MAIN VERTICAL CONNECTORS -->
+        <mxCell id="edge_main_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#1976D2;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="node_input" target="step1_group" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_main_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#00897B;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="step1_group" target="step2_group" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_main_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#FB8C00;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="step2_group" target="step3_group" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_main_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#7E57C2;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="step3_group" target="step4_group" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_main_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#43A047;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="step4_group" target="step5_group" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_main_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=3;strokeColor=#D81B60;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="step5_group" target="node_output" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
