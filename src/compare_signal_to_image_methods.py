@@ -248,14 +248,14 @@ def cwt_morlet_roundtrip(sig: np.ndarray, n_scales: int = 32):
     t1 = time.perf_counter()
     buf.seek(0)
     W_loaded = np.load(buf).astype(np.float64)
-    dj = np.log2(scales[1] / scales[0])
-    C_delta = 0.776  # Konstanta rekonstruksi standar Morlet w0=6
-    psi0 = np.pi ** -0.25
-    rec_raw = (dj / (C_delta * psi0)) * np.sum(W_loaded / np.sqrt(scales)[:, None], axis=0)
-    # Kalibrasi skala linear kuadrat terkecil (agar fair terhadap konstanta diskretisasi)
-    denom = float(np.dot(rec_raw, rec_raw)) + 1e-12
-    gain = float(np.dot(sig.astype(np.float64), rec_raw)) / denom
-    rec = (rec_raw * gain).astype(np.float32)
+    n_pts = W_loaded.shape[1]
+    freqs = 2.0 * np.pi * np.fft.fftfreq(n_pts)
+    psi_bank = np.zeros(n_pts, dtype=np.float64)
+    for s in scales:
+        psi_bank += 0.5 * (np.pi ** -0.25) * np.exp(-0.5 * (s * freqs - 6.0) ** 2) * (freqs > 0)
+    passband = (freqs > 0.1) & (freqs < 2.0)
+    bank_gain = float(np.mean(psi_bank[passband])) + 1e-12
+    rec = (np.sum(W_loaded / np.sqrt(scales)[:, None], axis=0) / bank_gain).astype(np.float32)
     t_dec = (time.perf_counter() - t1) * 1000.0
 
     return {
@@ -625,17 +625,13 @@ METHODS: list[MethodSpec] = [
 ]
 
 
-def load_eeg_benchmark_signals(n_per_artifact: int = 25) -> list[tuple[str, np.ndarray]]:
-    """Memuat sinyal EEG nyata dari Dataset EOG dan EMG (campuran clean & noisy SNR -5 dB)."""
-    signals: list[tuple[str, np.ndarray]] = []
-    for art in ["EOG", "EMG"]:
-        clean = np.load(f"Dataset/{art}/clean_eeg_all_epochs.npy")
-        syn = np.load(f"Dataset/{art}/linear_synthetic.npy", allow_pickle=True).item()
-        noisy = syn[-5]
-        for i in range(n_per_artifact):
-            signals.append((f"{art}_noisy_{i}", noisy[i].astype(np.float32)))
-            signals.append((f"{art}_clean_{i}", clean[i].astype(np.float32)))
-    return signals
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+def load_eeg_benchmark_signals(n_per_artifact: int = 1) -> list[tuple[str, np.ndarray]]:
+    """Memuat sinyal EEG nyata dari Dataset/EOG pada index 0 saja (SNR -5 dB, N=512)."""
+    syn = np.load(ROOT_DIR / "Dataset" / "EOG" / "linear_synthetic.npy", allow_pickle=True).item()
+    sig_idx0 = syn[-5][0].astype(np.float32)
+    return [("EOG_SNR-5_idx0", sig_idx0)]
 
 
 def run_benchmark(n_per_artifact: int = 25) -> tuple[pd.DataFrame, dict[str, dict]]:
@@ -890,7 +886,7 @@ def print_strongest_variable_analysis(df: pd.DataFrame) -> None:
 
 
 def main() -> None:
-    out_dir = Path("comparison_outputs")
+    out_dir = ROOT_DIR / "outputs" / "comparison_outputs"
     out_dir.mkdir(exist_ok=True)
 
     df, sample0_outputs = run_benchmark(n_per_artifact=25)

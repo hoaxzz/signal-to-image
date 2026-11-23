@@ -11,7 +11,12 @@ from __future__ import annotations
 import io
 import json
 from pathlib import Path
+import sys
 import time
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np
 from PIL import Image
@@ -219,8 +224,8 @@ def _signals_to_grid_batch(
 
 def load_splits(artifact_type: str) -> tuple[dict[str, tuple[np.ndarray, np.ndarray]], dict[int, tuple[np.ndarray, np.ndarray]]]:
     """Memuat dataset dan membagi berdasarkan indeks epoch (80/10/10) tanpa leakage."""
-    clean = np.load(f"Dataset/{artifact_type}/clean_eeg_all_epochs.npy")
-    syn = np.load(f"Dataset/{artifact_type}/linear_synthetic.npy", allow_pickle=True).item()
+    clean = np.load(ROOT_DIR / "Dataset" / artifact_type / "clean_eeg_all_epochs.npy")
+    syn = np.load(ROOT_DIR / "Dataset" / artifact_type / "linear_synthetic.npy", allow_pickle=True).item()
     snrs = sorted(syn.keys())
 
     n_epochs = clean.shape[0]
@@ -475,8 +480,8 @@ def evaluate_artifact_pipeline(
 
 
 def main() -> None:
-    out_dir = Path("pipeline_outputs")
-    ckpt_dir = Path("checkpoints")
+    out_dir = ROOT_DIR / "outputs" / "pipeline_outputs"
+    ckpt_dir = ROOT_DIR / "checkpoints"
     out_dir.mkdir(exist_ok=True)
     ckpt_dir.mkdir(exist_ok=True)
 

@@ -1,0 +1,11 @@
+---
+description: Otomatis simpan temuan riset, formula, dan eksperimen ke MCP Hindsight
+alwaysApply: true
+---
+
+# Aturan Wajib Sinkronisasi Memori Hindsight
+
+Setiap kali ada temuan riset, formula matematis, metrik evaluasi baru, atau hasil eksperimen/benchmark yang sudah final:
+1. Asisten **WAJIB otomatis** menyimpannya ke MCP Hindsight menggunakan `sync_retain`.
+2. **Tidak perlu menunggu instruksi manual** dari user.
+3. Simpan ke bank aktif (`default` dan/atau `vps-check`) dengan tag yang terstruktur (`project:eeg-denoising`, konteks yang spesifik, dsb).

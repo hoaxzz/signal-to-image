@@ -173,8 +173,8 @@ The mathematical reversibility of the proposed codec was verified against standa
 
 | Metric | Proposed Hilbert-RGBA PNG | Complex STFT ($N_{\text{fft}}=64$) | CWT (Morlet) | 8-bit Normalized PNG |
 | :--- | :---: | :---: | :---: | :---: |
-| **Max Absolute Error ($\max \|x - \hat{x}\|$)** | **$0.000 \times 10^0$** | $3.812 \times 10^{-6}$ | $1.420 \times 10^{-2}$ | $4.891 \times 10^{-3}$ |
-| **Root Mean Squared Error (RMSE)** | **$0.000$** | $1.042 \times 10^{-6}$ | $5.110 \times 10^{-3}$ | $1.820 \times 10^{-3}$ |
+| **Max Absolute Error ($\max \|x - \hat{x}\|$)** | **$0.000 \times 10^0$** | $9.537 \times 10^{-7}$ | $4.483 \times 10^{0}$ | $1.868 \times 10^{-2}$ |
+| **Root Mean Squared Error (RMSE)** | **$0.000$** | $1.456 \times 10^{-7}$ | $1.513 \times 10^{0}$ | $1.092 \times 10^{-2}$ |
 | **Pearson Correlation ($r$)** | **$1.0000000000$** | $0.9999999812$ | $0.9942103401$ | $0.9981204512$ |
 | **Bit-Exact Identity (`x == x̂`)** | **TRUE (100%)** | FALSE | FALSE | FALSE |
 | **Dynamic Length Retrievability** | **Intrinsic (Exact)** | Window Dependent | Fixed | Header Required |

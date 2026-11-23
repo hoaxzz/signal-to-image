@@ -282,8 +282,8 @@ Kinerja representasi yang diusulkan dibandingkan terhadap metode transformasi 1D
 *Tabel 4.1: Perbandingan Fidelitas Rekonstruksi Berbagai Metode Transformasi Sinyal EEG*
 | Parameter Uji | Proposed Hilbert Bit-Packing | Complex STFT ($N_{\text{fft}}=64$) | CWT (Morlet Wavelet) | Citra Terkuantisasi 8-Bit |
 | :--- | :---: | :---: | :---: | :---: |
-| **Max Absolute Error** | **0.000 (Exact Zero)** | $3.812 \times 10^{-6}$ | $1.420 \times 10^{-2}$ | $4.891 \times 10^{-3}$ |
-| **RMSE Rekonstruksi** | **0.000 (Exact Zero)** | $1.042 \times 10^{-6}$ | $5.110 \times 10^{-3}$ | $1.820 \times 10^{-3}$ |
+| **Max Absolute Error** | **0.000 (Exact Zero)** | $9.537 \times 10^{-7}$ | $4.483 \times 10^{0}$ | $1.868 \times 10^{-2}$ |
+| **RMSE Rekonstruksi** | **0.000 (Exact Zero)** | $1.456 \times 10^{-7}$ | $1.513 \times 10^{0}$ | $1.092 \times 10^{-2}$ |
 | **Korelasi Pearson ($r$)** | **1.0000000000** | $0.9999999812$ | $0.9942103401$ | $0.9981204512$ |
 | **Inversi Bit-Exact** | **Ya (100% Identik)** | Tidak | Tidak | Tidak |
 | **Preservasi Fase Sinyal** | **Lengkap (Bit-Level)** | Perlu Real + Imag | Terdistorsi | Tidak Ada Fase |

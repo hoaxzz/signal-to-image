@@ -17,10 +17,9 @@ env/
 .ipynb_checkpoints/
 
 # Generated outputs and trained model checkpoints
-comparison_outputs/
-pipeline_outputs/
-demo_outputs/
+outputs/
 checkpoints/
+archive_eksplorasi_pembanding/outputs/
 
 # Local datasets (often large or sensitive)
 Dataset/
