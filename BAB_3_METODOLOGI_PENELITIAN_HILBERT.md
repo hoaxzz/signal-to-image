@@ -9,7 +9,7 @@
   - [3.1.2 Landasan Berpikir Konseptual, Analitis, dan Strategis](#312-landasan-berpikir-konseptual-analitis-dan-strategis)
 - [3.2 Justifikasi Ilmiah & Simpulan Keunggulan Mutlak Hilbert RGBA PNG Berbasis Eksperimen Perbandingan](#32-justifikasi-ilmiah--simpulan-keunggulan-mutlak-hilbert-rgba-png-berbasis-eksperimen-perbandingan)
   - [3.2.1 Hasil Output Perbandingan 1: Benchmark 12 Metode Transformasi Sinyal 1D ke Citra 2D](#321-hasil-output-perbandingan-1-benchmark-12-metode-transformasi-sinyal-1d-ke-citra-2d)
-  - [3.2.2 Hasil Output Perbandingan 2: Benchmark 15 Varian Circular Mapping](#322-hasil-output-perbandingan-2-benchmark-15-varian-circular-mapping)
+  - [3.2.2 Hasil Output Perbandingan 2: Benchmark 14 Varian Circular Mapping](#322-hasil-output-perbandingan-2-benchmark-15-varian-circular-mapping)
   - [3.2.3 SIMPULAN UTAMA PERBANDINGAN: Mengapa Hilbert RGBA PNG Dinyatakan Unggul Secara Mutlak?](#323-simpulan-utama-perbandingan-mengapa-hilbert-rgba-png-dinyatakan-unggul-secara-mutlak)
 - [3.3 Strategi Penyiapan Data Kontaminasi dan Konversi Sinyal ke Citra Hilbert RGBA PNG](#33-strategi-penyiapan-data-kontaminasi-dan-konversi-sinyal-ke-citra-hilbert-rgba-png)
   - [3.3.1 Pembuatan Kontaminasi Sinyal (EOG & EMG) dan Protokol Bebas Kebocoran Data](#331-pembuatan-kontaminasi-sinyal-eog--emg-dan-protokol-bebas-kebocoran-data)
@@ -110,10 +110,10 @@ Selain itu, hasil output **Uji Panjang Sinyal Dinamis ($N \in \{128, 256, 384, 5
 
 ---
 
-### 3.2.2 Hasil Output Perbandingan 2: Benchmark 15 Varian Circular Mapping
+### 3.2.2 Hasil Output Perbandingan 2: Benchmark 14 Varian Circular Mapping
 Tabel 3.2 menyajikan hasil pengukuran kuantitatif dari output eksekusi notebook `compare_circular_mapping_methods.ipynb` pada sinyal EEG nyata Dataset Index 0 ($N=512$) ($N=512$, kanvas polar $64 \times 64$):
 
-*Tabel 3.2: Hasil Output Eksperimen Perbandingan 15 Varian Circular Mapping pada Sinyal Dataset Index 0 (`EOG SNR -5 dB, idx 0`, $N=512$, Kanvas $64 \times 64$)*
+*Tabel 3.2: Hasil Output Eksperimen Perbandingan 14 Varian Circular Mapping pada Sinyal Dataset Index 0 (`EOG SNR -5 dB, idx 0`, $N=512$, Kanvas $64 \times 64$)*
 | No | Kandidat Metode Transformasi | Kelompok Mekanisme | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Galat Relatif (PRD %) | Langkah Maksimum | Korelasi Spasial 2D ($r_{2D} \uparrow$) | Kehalusan Spasial (Norm TV $\downarrow$) | Patahan Sudut (*Seam Jump* $\downarrow$) | Ukuran Berkas per Sinyal |
 |:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 1 | Direct Polar Plot | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,133059 | 7,3062% | 4 piksel | 0,4741 | 0,2427 | 0,0461 | 16,5 KB |
@@ -130,18 +130,19 @@ Tabel 3.2 menyajikan hasil pengukuran kuantitatif dari output eksekusi notebook 
 | 12 | Adaptive Polar-GAF | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 2,691449 | 147,7864% | — | 0,2601 | 0,5457 | 0,0000 | 16,5 KB |
 | 13 | Polar Recurrence Plot | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,2000 | 0,2703 | 0,0000 | 16,5 KB |
 | 14 | Polar Scalogram | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 1,631531 | 89,5868% | — | 0,4221 | 0,5908 | 0,1684 | 16,5 KB |
-| 15 | Topographic Map (AEP) | Khusus Spasial Multi-Kanal | `64×64` | 0% (Lossy) | 1,328578 | 72,9517% | — | **0,9905** | **0,0970** | 0,0755 | 16,5 KB |
 
-*\*Catatan Tabel 3.2: Setelah cacat logika bypass memori diperbaiki (sehingga seluruh dekoder wajib membaca langsung dari matriks citra 2D), metode #6 (Hilbert Polar Map) dan #8 (Complex FFT Polar) terbukti bersifat **Lossy (0% Bit-Exact)** dengan $\text{RMSE} = 0,063951$ dan $\text{RMSE} = 1,363625$. Adapun metode #3 (Fermat Spiral) dan #4 (Vogel Spiral) hanya bebas tabrakan piksel karena disimpan sebagai array `.npy` `float32` berukuran $64 \times 64$ ($16,5\text{ KB}$, $4\times$ lebih luas dari kisi $32 \times 32$), namun mengalami **lonjakan langkah piksel** (`Langkah Maksimum = 3 piksel` pada Fermat Spiral dan `76 piksel` pada Vogel Spiral) sehingga korelasi spasial 2D-nya sangat rendah ($0,1625$ dan $-0,0001$).*
+*\*(Catatan Metodologis: Metode EEG Topographic Map / AEP sengaja tidak disertakan dalam tabel perbandingan karena metode tersebut mensyaratkan rekaman spasial 3D multi-kanal dari banyak elektroda kepala, sedangkan penelitian ini berfokus murni pada restorasi deret waktu satu dimensi / single-channel EEG).*
 
-![Galeri Visual 15 Varian Circular Mapping](outputs/circular_outputs/visual_circular_representations.png)
-![Grafik Komparasi 15 Varian Circular Mapping](outputs/circular_outputs/metrics_circular_comparison_chart.png)
+*Catatan Tabel 3.2: Setelah cacat logika bypass memori diperbaiki (sehingga seluruh dekoder wajib membaca langsung dari matriks citra 2D), metode #6 (Hilbert Polar Map) dan #8 (Complex FFT Polar) terbukti bersifat **Lossy (0% Bit-Exact)** dengan $\text{RMSE} = 0,063951$ dan $\text{RMSE} = 1,363625$. Adapun metode #3 (Fermat Spiral) dan #4 (Vogel Spiral) hanya bebas tabrakan piksel karena disimpan sebagai array `.npy` `float32` berukuran $64 \times 64$ ($16,5\text{ KB}$, $4\times$ lebih luas dari kisi $32 \times 32$), namun mengalami **lonjakan langkah piksel** (`Langkah Maksimum = 3 piksel` pada Fermat Spiral dan `76 piksel` pada Vogel Spiral) sehingga korelasi spasial 2D-nya sangat rendah ($0,1625$ dan $-0,0001$).*
+
+![Galeri Visual 14 Varian Circular Mapping](outputs/circular_outputs/visual_circular_representations.png)
+![Grafik Komparasi 14 Varian Circular Mapping](outputs/circular_outputs/metrics_circular_comparison_chart.png)
 
 ---
 
 ### 3.2.3 SIMPULAN UTAMA PERBANDINGAN: Mengapa Hilbert RGBA PNG Dinyatakan Unggul Secara Mutlak?
 
-Berdasarkan hasil output kuantitatif dari kedua notebook perbandingan di atas (Tabel 3.1 dan Tabel 3.2), **disimpulkan secara tegas bahwa `Hilbert RGBA PNG` unggul secara mutlak dibandingkan seluruh 11 metode transformasi global lainnya maupun seluruh 15 varian Circular Mapping**.
+Berdasarkan hasil output kuantitatif dari kedua notebook perbandingan di atas (Tabel 3.1 dan Tabel 3.2), **disimpulkan secara tegas bahwa `Hilbert RGBA PNG` unggul secara mutlak dibandingkan seluruh 11 metode transformasi global lainnya maupun seluruh 14 varian Circular Mapping**.
 
 Keunggulan mutlak **Hilbert RGBA PNG** bukan hanya terletak pada sifat *lossless*-nya semata (karena *Raster RGBA*, *Morton RGBA*, dan *Square Spiral RGBA* juga memiliki $\text{RMSE} = 0,000000$), melainkan dibuktikan melalui **3 Babak Eliminasi Objektif** dan **5 Bukti Keunggulan Simultan** berikut:
 

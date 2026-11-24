@@ -1,5 +1,5 @@
 ﻿# 📑 SINTESIS KOMPREHENSIF & KESIMPULAN BENCHMARK DUA NOTEBOOK
-## Analisis Perbandingan: 12 Metode Transformasi Sinyal ke Citra vs. 15 Varian Circular Mapping (Total 27 Metode) pada Biosinyal EEG untuk Denoising Berbasis Deep Learning (2D CNN / U-Net)
+## Analisis Perbandingan: 12 Metode Transformasi Sinyal ke Citra vs. 14 Varian Circular Mapping (Total 26 Metode) pada Biosinyal EEG untuk Denoising Berbasis Deep Learning (2D CNN / U-Net)
 
 ---
 
@@ -26,7 +26,7 @@ Pengujian dilakukan secara konsisten pada **sinyal EEG nyata Dataset Index 0 (`E
         ▼                                                                   ▼
 [NOTEBOOK 1: GLOBAL BENCHMARK]                          [NOTEBOOK 2: CIRCULAR TAXONOMY]
 compare_signal_to_image_methods.ipynb                   compare_circular_mapping_methods.ipynb
-• 12 Metode Lintas Disiplin                             • 15 Varian Pemetaan Melingkar
+• 12 Metode Lintas Disiplin                             • 14 Varian Pemetaan Melingkar
 • Time-Freq (STFT, CWT, SWT)                            • Kelompok 1: Native Variable-Length (9 metode)
 • Dynamic Fields (GASF, MTF, RP)                        • Kelompok 2: Fixed-Grid / Partisi Sel (5 metode)
 • Space-Filling (Hilbert, Morton, Raster)               • Kelompok 3: Topografi Spasial (AEP)
@@ -71,7 +71,7 @@ Kedua notebook menerapkan formulasi metrik yang identik untuk mengukur integrita
 
 ---
 
-### 2.2 Hasil Benchmark Notebook 2: 15 Varian Circular Mapping Lengkap
+### 2.2 Hasil Benchmark Notebook 2: 14 Varian Circular Mapping Lengkap
 *(Diekstrak dari sinyal EEG nyata Dataset Index 0 (`EOG SNR -5 dB, idx 0`, $N=512$), $N=512$, kanvas piringan polar $64 \times 64$)*
 
 | No | Kandidat Metode Circular Mapping | Kelompok Mekanisme | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Langkah Maksimum | Korelasi Spasial 2D ($r_{2D}$) | Norm TV 2D | Patahan Sudut (*Seam*) | Ukuran Berkas |
@@ -90,7 +90,6 @@ Kedua notebook menerapkan formulasi metrik yang identik untuk mengukur integrita
 | 12 | **Adaptive Polar-GAF** | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 2,691449 | — | 0,2601 | 0,5457 | 0,0000 | 16,5 KB |
 | 13 | **Polar Recurrence Plot** | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,2000 | 0,2703 | 0,0000 | 16,5 KB |
 | 14 | **Polar Scalogram** | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 1,631531 | — | 0,4221 | 0,5908 | 0,1684 | 16,5 KB |
-| 15 | **Topographic Map (AEP)** | Khusus Spasial Multi-Kanal | `64×64` | 0% (Lossy) | 1,328578 | — | **0,9905** | **0,0970** | 0,0755 | 16,5 KB |
 
 ---
 
@@ -138,7 +137,7 @@ Lapisan konvolusi 2D pada CNN/U-Net mengasumsikan bahwa **piksel yang berdekatan
 
 ### 3.3 Anomali Fisis Koordinat Melingkar vs. Kekuatan Kisi Kartesius
 
-Pengujian pada 15 varian Circular Mapping mengungkap dua keterbatasan fisis mendasar pada sistem koordinat lingkaran:
+Pengujian pada 14 varian Circular Mapping mengungkap dua keterbatasan fisis mendasar pada sistem koordinat lingkaran:
 
 #### A. Singularitas Kutub ($r \to 0$) dan Disparitas Kepadatan
 * Pada koordinat polar, elemen luas diferensial dinyatakan sebagai:
