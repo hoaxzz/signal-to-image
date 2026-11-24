@@ -118,8 +118,8 @@ Tabel 3.2 menyajikan hasil pengukuran kuantitatif dari output eksekusi notebook 
 |:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 1 | Direct Polar Plot | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,133059 | 7,3062% | 4 piksel | 0,4741 | 0,2427 | 0,0461 | 16,5 KB |
 | 2 | Archimedean Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,481926 | 26,4624% | 5 piksel | 0,1637 | 0,4730 | 0,0362 | 16,5 KB |
-| 3 | Fermat Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless)* | 0,000000* | 0,0000% | **3 piksel** | 0,1625 | 0,5403 | 0,2066 | 16,5 KB |
-| 4 | Vogel / Golden Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless)* | 0,000000* | 0,0000% | **76 piksel** | **-0,0001** | 0,6302 | 0,1782 | 16,5 KB |
+| 3 | Fermat Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | 0,0000% | **3 piksel** | 0,1625 | 0,5403 | 0,2066 | 16,5 KB |
+| 4 | Vogel / Golden Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | 0,0000% | **76 piksel** | **-0,0001** | 0,6302 | 0,1782 | 16,5 KB |
 | 5 | Symmetric Dot (SDP) | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,7678 | 0,4032 | 0,0000 | 16,5 KB |
 | 6 | Hilbert Polar Map | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,063951 | 3,5115% | 10 piksel | 0,2607 | 0,3383 | 0,0303 | 16,5 KB |
 | 7 | Poincaré Polar Map | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,7295 | 0,2228 | 0,0139 | 16,5 KB |
@@ -133,7 +133,7 @@ Tabel 3.2 menyajikan hasil pengukuran kuantitatif dari output eksekusi notebook 
 
 *\*(Catatan Metodologis: Metode EEG Topographic Map / AEP sengaja tidak disertakan dalam tabel perbandingan karena metode tersebut mensyaratkan rekaman spasial 3D multi-kanal dari banyak elektroda kepala, sedangkan penelitian ini berfokus murni pada restorasi deret waktu satu dimensi / single-channel EEG).*
 
-*Catatan Tabel 3.2: Setelah cacat logika bypass memori diperbaiki (sehingga seluruh dekoder wajib membaca langsung dari matriks citra 2D), metode #6 (Hilbert Polar Map) dan #8 (Complex FFT Polar) terbukti bersifat **Lossy (0% Bit-Exact)** dengan $\text{RMSE} = 0,063951$ dan $\text{RMSE} = 1,363625$. Adapun metode #3 (Fermat Spiral) dan #4 (Vogel Spiral) hanya bebas tabrakan piksel karena disimpan sebagai array `.npy` `float32` berukuran $64 \times 64$ ($16,5\text{ KB}$, $4\times$ lebih luas dari kisi $32 \times 32$), namun mengalami **lonjakan langkah piksel** (`Langkah Maksimum = 3 piksel` pada Fermat Spiral dan `76 piksel` pada Vogel Spiral) sehingga korelasi spasial 2D-nya sangat rendah ($0,1625$ dan $-0,0001$).*
+*Catatan Tabel 3.2: Setelah cacat logika bypass memori diperbaiki (sehingga seluruh dekoder wajib membaca langsung dari matriks citra 2D), metode #6 (Hilbert Polar Map) dan #8 (Complex FFT Polar) terbukti bersifat **Lossy (0% Bit-Exact)** dengan $\text{RMSE} = 0,063951$ dan $\text{RMSE} = 1,363625$. Adapun metode #3 (Fermat Spiral) dan #4 (Vogel Spiral) pada panjang $N=512$ memang bernilai $0,000000$ murni tanpa galat, namun dieliminasi karena mengalami **lonjakan langkah piksel yang sangat besar** (`Langkah Maksimum = 3 piksel` pada Fermat Spiral dan `76 piksel` pada Vogel Spiral) sehingga korelasi spasial 2D-nya sangat rendah ($0,1625$ dan $-0,0001$).*
 
 ![Galeri Visual 14 Varian Circular Mapping](outputs/circular_outputs/visual_circular_representations.png)
 ![Grafik Komparasi 14 Varian Circular Mapping](outputs/circular_outputs/metrics_circular_comparison_chart.png)

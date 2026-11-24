@@ -78,8 +78,8 @@ Kedua notebook menerapkan formulasi metrik yang identik untuk mengukur integrita
 |:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 1 | **Direct Polar Plot** | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,133059 | 4 piksel | 0,4741 | 0,2427 | 0,0461 | 16,5 KB |
 | 2 | **Archimedean Spiral** | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,481926 | 5 piksel | 0,1637 | 0,4730 | 0,0362 | 16,5 KB |
-| 3 | **Fermat Spiral** | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless)* | 0,000000* | **3 piksel** | **0,1625** | 0,5403 | 0,2066 | 16,5 KB |
-| 4 | **Vogel / Golden Spiral** | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless)* | 0,000000* | **76 piksel** | **-0,0001** | 0,6302 | 0,1782 | 16,5 KB |
+| 3 | **Fermat Spiral** | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | **3 piksel** | **0,1625** | 0,5403 | 0,2066 | 16,5 KB |
+| 4 | **Vogel / Golden Spiral** | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | **76 piksel** | **-0,0001** | 0,6302 | 0,1782 | 16,5 KB |
 | 5 | **Symmetric Dot (SDP)** | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7678 | 0,4032 | 0,0000 | 16,5 KB |
 | 6 | **Hilbert Polar Map** | Kelompok 1 (Langsung Variabel) | `64×64` | **0% (Lossy)** | **0,063951** | 10 piksel | 0,2607 | 0,3383 | 0,0303 | 16,5 KB |
 | 7 | **Poincaré Polar Map** | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7295 | 0,2228 | 0,0139 | 16,5 KB |
