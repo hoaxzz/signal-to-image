@@ -1,0 +1,393 @@
+# Lossless 1D-to-2D EEG Signal Transformation via Hilbert Space-Filling Curve and IEEE 754 RGBA Bit-Packing for Artifact Removal Using Bottleneck Self-Attention 2D Residual U-Net
+
+**Target Scopus Journals (Q1/Q2):** *Biomedical Signal Processing and Control* (Elsevier) / *Computers in Biology and Medicine* (Elsevier) / *IEEE Journal of Biomedical and Health Informatics (JBHI)*
+
+**Authors:**  
+[First Author Name]$^{a,*}$, [Second Author Name]$^{a}$, [Third Author Name]$^{b}$  
+$^{a}$ *Department of Electrical and Biomedical Engineering, [University Name], [City], Indonesia*  
+$^{b}$ *Signal Processing and Artificial Intelligence Research Group, [Institution Name], [City], Indonesia*  
+$^{*}$ *Corresponding author:* `[author_email@institution.ac.id]`
+
+---
+
+## Highlights
+
+The following highlights summarize the core methodological innovations and empirical findings of this study in accordance with Elsevier Scopus journal submission standards.
+
+* Order-5 Hilbert RGBA PNG maps 1D `float32` EEG signals to $32 \times 32$ 2D grids with 100% bit-exact zero loss ($\text{RMSE} = 0.0$).
+* Fractal Hilbert mapping preserves strict unit Manhattan temporal step continuity ($\|\Delta \mathbf{p}\|_1 = 1$, $\text{Max Jump} = 1$ pixel).
+* Benchmarking across 26 transformation methods confirms Hilbert RGBA PNG achieves the highest lossless 2D spatial correlation ($r_{2D} = 0.8228$).
+* Dual-channel spatial tensors (amplitude + binary mask) and terminal metadata at $(0, 31)$ eliminate zero-padding convolution bias.
+* A lightweight 2D Residual U-Net with Bottleneck Multi-Head Self-Attention and Hybrid Loss restores EEG morphology in real time.
+
+---
+
+## Abstract
+
+This abstract is structured in accordance with international Scopus-indexed biomedical engineering journals, integrating the research background, proposed methodology, benchmark results, and clinical significance into a single cohesive paragraph.
+
+**Abstract:**  
+Applying two-dimensional (2D) deep learning architectures to one-dimensional (1D) electroencephalogram (EEG) artifact removal conventionally suffers from phase degradation in time-frequency spectrograms, irreversible quantization error in 8-bit images, quadratic memory explosion in relational fields, or boundary discontinuities in naive raster folding. This paper proposes a deterministic, 100% bit-exact lossless, locality-preserving, and self-contained 1D-to-2D transformation framework by integrating an Order-5 discrete Hilbert space-filling curve ($32 \times 32$) with IEEE 754 single-precision (`float32`) byte-level bit-packing into standard 4-channel RGBA PNG containers. Each 32-bit signal sample is bijectively cast into four 8-bit `[R, G, B, A]` channels without numerical rounding, while the terminal Hilbert coordinate $(0, 31)$ intrinsically encodes dynamic sequence length metadata ($1 \le N \le 1023$, `uint32`). To preserve algebraic linearity during 2D convolutions, the PNG container is unpacked into a dual-channel spatial tensor (`[2, 32, 32]`) that pairs continuous signal amplitudes with a binary active mask to eliminate zero-padding bias. The dual-channel grid is subsequently processed by a lightweight **2D Hilbert Residual U-Net (`HilbertUNet`, $786,241$ parameters)** equipped with Bottleneck Multi-Head Self-Attention to mitigate inter-quadrant false-neighbor discontinuities, and optimized under a Time-Frequency Hybrid Loss. Comparative benchmarking across 26 signal-to-image transformation methods (12 global paradigms and 14 circular mappings) on semi-synthetic EOG and EMG contaminated datasets confirms that Hilbert RGBA PNG uniquely achieves exact zero-loss inversion ($\text{Bit-Exact} = 100\%$, $\text{RMSE} = 0.000000$, $\text{PRD} = 0.0000\%$), unit Manhattan temporal step continuity ($\text{Max Jump} = 1$ pixel), the highest 2D spatial neighbor coherence among lossless representations ($r_{2D} = 0.8228$, $\text{TV}_{\text{norm}} = 0.3572$), and an ultra-compact $2.10\text{ KB}$ file footprint ($0.375\text{ ms}$ round-trip latency).
+
+**Keywords:** Hilbert Space-Filling Curve; Lossless IEEE 754 Bit-Packing; EEG Artifact Removal; EOG and EMG Denoising; 2D Residual U-Net; Self-Attention.
+
+---
+
+## 1. Introduction
+
+This Introduction section establishes the clinical motivation, theoretical background, and scientific novelty of the study following the standard IMRaD structure of Scopus-indexed journals. Section 1.1 outlines the neurophysiological characteristics of EEG signals and the challenges posed by ocular and muscular artifacts, Section 1.2 critically reviews existing 1D-to-2D signal-to-image transformation paradigms and identifies four fundamental research gaps, and Section 1.3 formulates the proposed lossless Hilbert RGBA PNG framework along with the main contributions of this paper.
+
+### 1.1. Clinical Background and Challenges in EEG Artifact Removal
+Electroencephalography (EEG) records non-invasive post-synaptic bioelectric potentials generated by synchronized pyramidal neuron populations within the cerebral cortex at millisecond temporal resolution. In clinical neurology and Brain-Computer Interface (BCI) systems, essential diagnostic and cognitive features reside in both the time-domain waveform morphology and the spectral power distribution across five primary physiological frequency bands: Delta ($\delta: 0.5\text{--}4\text{ Hz}$), Theta ($\theta: 4\text{--}8\text{ Hz}$), Alpha ($\alpha: 8\text{--}13\text{ Hz}$), Beta ($\beta: 13\text{--}30\text{ Hz}$), and Gamma ($\gamma: >30\text{ Hz}$) [1], [2]. However, because scalp EEG amplitudes typically span only $10\text{--}100\,\mu\text{V}$, recordings are highly susceptible to contamination from non-cerebral physiological artifacts, most notably the Electrooculogram (EOG) and Electromyogram (EMG) [3].
+
+EOG artifacts originate from corneo-retinal dipole shifts during eye blinks and saccadic movements, producing high-amplitude transient deflections ($>200\,\mu\text{V}$) concentrated in the low-frequency range ($<4\text{--}8\text{ Hz}$) that severely obscure $\delta$ and $\theta$ oscillations. Conversely, EMG artifacts arise from motor unit action potentials of cranial, facial, and temporal muscles, manifesting as broadband high-frequency stochastic noise ($15\text{--}100+\text{ Hz}$) that directly overlaps with cognitive $\beta$ and $\gamma$ rhythms. Due to this non-stationarity and severe spectral overlap, classical linear frequency filters, adaptive filtering, and static-threshold wavelet decompositions frequently fail to suppress artifacts without distorting the underlying neural phase and waveform morphology, whereas spatial source separation methods such as Independent Component Analysis (ICA) are inapplicable to single-channel or low-density wearable EEG recordings [4].
+
+### 1.2. Related Work on 1D-to-2D Biosignal Transformations and Research Gaps
+Over the past decade, two-dimensional computer vision backbones—including 2D Convolutional Neural Networks (2D-CNNs), Residual U-Net encoder-decoder architectures, and spatial self-attention mechanisms—have demonstrated hierarchical feature extraction and multi-scale contextual modeling capabilities vastly superior to standard 1D convolutional layers [5], [6]. This architectural advantage has motivated a growing paradigm in biomedical signal processing: transforming 1D time-series into 2D planar image representations, performing spatial image restoration, and reconstructing the denoised output back into a 1D waveform.
+
+Several recent studies have investigated this 1D-to-2D restoration paradigm. Mashhadi et al. [7] reshaped 1D physiological signals directly into 2D grayscale images and employed a 2D U-Net for signal denoising. Yan and Wu [8] mapped 1D EEG signals into 2D time-frequency representations for Non-Local Means (NLM) image filtering followed by inverse transformation. Chuang et al. [9] developed IC-U-Net using 2D component maps within a U-Net denoising autoencoder, while Huang et al. [10] adapted a 2D image dehazing network (GCANet) to 2D EEG grids. More recently, Pei et al. [11] proposed DTP-Net using 2D time-frequency feature maps with a learnable decoder, Liu et al. [12] introduced the E2CAR framework that folds 1D EEG segments into 2D matrices for hardware-accelerated 2D-CNN edge inference, and the SWTT framework [13] combined 2D Stationary Wavelet Transform (SWT) coefficient matrices with Transformer self-attention.
+
+Despite these advances, a rigorous examination of the four major 1D-to-2D transformation families reported in the literature reveals **four fundamental research gaps** when applied to microvolt-level EEG signal restoration:
+
+1. **Phase Degradation and Non-Exact Inversion in Time-Frequency Representations (STFT & CWT):**  
+   Short-Time Fourier Transform (STFT) and Continuous Wavelet Transform (CWT) are fundamentally constrained by the Heisenberg-Gabor uncertainty principle ($\Delta t \cdot \Delta f \ge \frac{1}{4\pi}$). Converting complex time-frequency matrices into visual magnitude spectrograms discards phase angle dynamics ($\angle S(t, f)$), causing iterative phase recovery algorithms such as Griffin-Lim to introduce severe waveform distortion. Storing complex components or multi-level SWT arrays reduces inversion error but still incurs floating-point numerical residuals ($\sim 10^{-7}$), expands tensor dimensionality, and fails to produce a portable, 100% bit-exact image file.
+2. **Quadratic Memory Explosion and Non-Invertibility in Dynamic Fields ($N \times N$):**  
+   Gramian Angular Summation/Difference Fields (GASF/GADF), Markov Transition Fields (MTF), and Recurrence Plots (RP) expand a length-$N$ time-series into an $N \times N$ relational matrix ($\mathcal{O}(N^2)$). For a standard 2-second EEG epoch ($N = 512$), the spatial canvas explodes to $512 \times 512 = 262,144$ pixels ($\approx 1.05\text{ MB}$ per epoch). Crucially, MTF and RP are mathematically non-invertible back to 1D microvolt time-series, rendering them unusable for signal restoration.
+3. **Polar Coordinate Singularities and Angular Seam Jumps in Circular Mappings:**  
+   Projecting 1D signals onto circular or spiral canvases introduces two geometric anomalies incompatible with Cartesian $3 \times 3$ convolution kernels. First, **Pole Singularity ($r \to 0$)** occurs because the differential area element $dA = r\,dr\,d\theta$ vanishes toward the center, causing multiple temporal samples to collide within the same central pixels (*pixel collision*). Second, **Angular Seam Discontinuity ($\theta: 2\pi \to 0$)** forces the initial sample ($t=0$) to abut the final sample ($t=N-1$), creating an artificial high-frequency boundary artifact. Furthermore, phyllotactic trajectories such as the Vogel/Golden Spiral separate consecutive samples by the golden angle $\approx 137.5^\circ$, destroying local spatial neighbor correlation ($r_{2D} \approx 0$).
+4. **Row-Boundary Discontinuities in Naive Spatial Folding (*Raster/Morton*) and 8-Bit Quantization Loss:**  
+   Folding a 1D vector row-by-row (*Raster-scan reshaping* [7], [12]) severs temporal continuity at every row boundary, where transitioning from $(r, M-1)$ to $(r+1, 0)$ induces a spatial jump of $M$ pixels (`Max Jump = 32 pixels` on a $32 \times 32$ grid), while Morton/Z-Order curves suffer from diagonal inter-quadrant jumps (`Max Jump = 16 pixels`). Moreover, normalizing `float32` amplitudes into 8-bit grayscale intensities ($[0, 255]$) introduces irreversible quantization error ($\text{RMSE} \approx 1.09 \times 10^{-2}$), erasing subtle sub-microvolt EEG fluctuations.
+
+### 1.3. Proposed Framework and Scientific Contributions
+To resolve these four limitations simultaneously, this paper proposes a mathematically lossless 1D-to-2D spatial transformation framework based on an **Order-5 Discrete Hilbert Space-Filling Curve ($32 \times 32$)** [14], [15] coupled with **IEEE 754 `float32` RGBA Bit-Packing** [16] and a **Bottleneck Self-Attention 2D Residual U-Net (`HilbertUNet`)**. The primary scientific contributions of this work are fourfold:
+
+1. **A 100% Bit-Exact Lossless and Self-Contained 1D-to-2D Hilbert RGBA PNG Codec:**  
+   We formulate a bijective byte-level mapping that packs each 32-bit IEEE 754 `float32` EEG sample directly into the four 8-bit `[R, G, B, A]` channels of a fixed $32 \times 32$ PNG image along the Order-5 Hilbert trajectory with zero numerical loss ($\text{RMSE} = 0.000000$, $\text{PRD} = 0.0000\%$), while embedding dynamic sequence length metadata ($1 \le N \le 1023$, `uint32`) into the terminal Hilbert pixel at $(0, 31)$.
+2. **Comprehensive Three-Stage Benchmark across 26 Signal-to-Image Transformation Methods:**  
+   We conduct a rigorous quantitative evaluation comparing the proposed representation against 12 global transformation paradigms and 14 circular mapping variants, proving that Hilbert RGBA PNG uniquely combines 100% bit-exact invertibility, unit Manhattan temporal step continuity ($\|\Delta \mathbf{p}\|_1 = 1$), the highest 2D spatial neighbor correlation among lossless codecs ($r_{2D} = 0.8228$), and a compact $2.10\text{ KB}$ storage footprint ($499\times$ smaller than GASF/MTF).
+3. **Dual-Channel Anti-Bias Tensor Extraction and `HilbertUNet` with Bottleneck Self-Attention:**  
+   We decouple lossless disk serialization (`uint8` RGBA) from neural computation by unpacking the container into a dual-channel `float32` spatial grid `[2, 32, 32]` (continuous amplitude plane plus binary active mask) to prevent zero-padding bias, and integrate Multi-Head Self-Attention at the $4 \times 4$ bottleneck to model global dependencies across all 16 Hilbert sub-quadrants and mitigate fractal false-neighbor artifacts.
+4. **Time-Frequency Hybrid Loss Supervision across Extreme-to-Mild SNR Regimes:**  
+   We combine time-domain Mean Squared Error (MSE) with an Orthonormal Real Fast Fourier Transform (RFFT) magnitude $\ell_1$ loss to preserve both sharp waveform peaks and physiological frequency rhythms ($\delta, \theta, \alpha, \beta, \gamma$) across ten EOG and EMG contamination levels ($\text{SNR}_{\text{in}} \in [-7, +2]\text{ dB}$).
+
+The remainder of this paper is organized as follows: Section 2 details the dataset construction, the 26-method comparative selection framework, the mathematical formulation of the Hilbert RGBA PNG codec, the `HilbertUNet` 2D architecture, and the evaluation metrics. Section 3 presents experimental results and discussion, and Section 4 concludes the paper.
+
+---
+
+## 2. Materials and Methods
+
+This Materials and Methods section details the experimental design, mathematical formulations, and deep learning architecture to ensure full scientific reproducibility. The methodology is structured into seven cohesive subsections: the end-to-end system pipeline overview (Section 2.1), semi-synthetic dataset construction and zero-leakage partitioning (Section 2.2), the 26-method comparative selection framework (Section 2.3), the mathematical formulation of the Order-5 Hilbert curve and IEEE 754 RGBA bit-packing codec (Section 2.4), dual-channel spatial tensor extraction and the `HilbertUNet` 2D architecture (Section 2.5), the time-frequency hybrid loss and training protocol (Section 2.6), and inverse 1D reconstruction alongside multi-domain evaluation metrics (Section 2.7).
+
+### 2.1. System Pipeline Overview
+This study employs a quantitative experimental methodology to establish an objective causal relationship between 2D spatial mapping topology and 1D EEG restoration fidelity. As illustrated in **Figure 1**, the proposed end-to-end framework comprises four sequential modules. First, the data preparation module constructs one-to-one paired clean and EOG/EMG-contaminated EEG epochs across ten input SNR levels ($-7\text{ dB}$ to $+2\text{ dB}$) under a strict clean-epoch index split. Second, the *Lossless Hilbert RGBA PNG Encoder* folds each 1D signal of dynamic length $N \le 1023$ along an Order-5 Hilbert curve onto a $32 \times 32$ canvas, packs the 4-byte IEEE 754 `float32` representation into `[R, G, B, A]` (`uint8`), and records $N$ (`uint32`) in the terminal pixel $(0, 31)$. Third, the *Dual-Channel Tensor Extractor & `HilbertUNet` 2D* unpacks the PNG container into a `[2, 32, 32]` `float32` tensor (signal amplitude plane and binary active mask) and performs spatial artifact removal via a 2D Residual U-Net equipped with Bottleneck Multi-Head Self-Attention. Fourth, the *Inverse Hilbert Decoder* retrieves $N$ from pixel $(0, 31)$ and unfolds the active Hilbert coordinates back into a clean 1D EEG time-series $\hat{\mathbf{x}} \in \mathbb{R}^N$.
+
+```
+[ Contaminated 1D EEG Signal: y ∈ ℝᴺ (float32, 1 ≤ N ≤ 1023) ]
+                            │
+                            ▼
+┌───────────────────────────────────────────────────────────┐
+│ MODULE 1: LOSSLESS HILBERT RGBA PNG ENCODER               │
+│ • Order-5 Hilbert Curve Mapping: d ∈ [0..1023] → (r, c)   │
+│ • IEEE 754 float32 Bit-Packing (4 Bytes) → [R, G, B, A]   │
+│ • Pixels 0..N-1: Active Signal | N..1022: Zero-Padding    │
+│ • Terminal Pixel d=1023 at (0, 31): Embed uint32(N)       │
+└───────────────────────────┬───────────────────────────────┘
+                            │  Physical Container: 32 × 32 × 4 RGBA PNG
+                            ▼
+┌───────────────────────────────────────────────────────────┐
+│ MODULE 2: DUAL-CHANNEL SPATIAL TENSOR EXTRACTION          │
+│ • Neural Input Tensor G ∈ ℝ^(2 × 32 × 32) (float32):      │
+│   - Channel 0: Continuous EEG Amplitude along Hilbert Path│
+│   - Channel 1: Binary Active Mask (1.0 = Active, 0.0 = Pad│
+└───────────────────────────┬───────────────────────────────┘
+                            │
+                            ▼
+┌───────────────────────────────────────────────────────────┐
+│ MODULE 3: 2D HILBERT RES-UNET SPATIAL RESTORATION         │
+│ • Stem Conv 3×3 (2 → 24) + 3-Stage ResBlock2D Encoder     │
+│   (GroupNorm-8, GELU, Strided Conv 32×32 → 16×16 → 8×8)   │
+│ • Bottleneck (4×4, 96 Ch): ResBlock2D + 4-Head Self-Attn  │
+│ • 3-Stage Decoder (ConvTranspose2d + Skip Connections)    │
+│ • Supervision: Hybrid Time-Domain MSE + 0.8 RFFT L1 Loss  │
+└───────────────────────────┬───────────────────────────────┘
+                            │  Denoised Spatial Grid: [1, 32, 32]
+                            ▼
+┌───────────────────────────────────────────────────────────┐
+│ MODULE 4: INVERSE HILBERT DECODER & MULTI-DOMAIN EVAL     │
+│ • Read Sequence Length N from Terminal Pixel (0, 31)      │
+│ • Unfold Hilbert Indices 0..N-1 → Clean 1D EEG x̂ ∈ ℝᴺ     │
+│ • Metrics: RMSE, RRMSE_t, RRMSE_s, CC, ΔSNR, & Latency    │
+└───────────────────────────────────────────────────────────┘
+```
+*Figure 1: End-to-end architecture of the proposed lossless Hilbert RGBA PNG transformation and `HilbertUNet` 2D EEG restoration pipeline.*
+
+---
+
+### 2.2. Dataset Construction, Power-Controlled Contamination, and Zero-Leakage Splitting
+Supervised training and objective evaluation of deep learning denoising models require exact ground-truth clean references alongside controlled artifact mixtures. Accordingly, this subsection describes the benchmark EEG signal specifications, the one-to-one random pairing protocol for ocular and muscular artifacts, the power-controlled additive mixing formulation across ten SNR levels, and the epoch-level data partitioning strategy designed to guarantee zero data leakage.
+
+#### 2.2.1. Signal Specifications and One-to-One Random Pairing Scheme
+The experimental dataset is constructed from benchmark corpora of clean ground-truth EEG epochs, ocular artifact (EOG) epochs, and muscular artifact (EMG) epochs sampled at $f_s = 256\text{ Hz}$ with a standard epoch length of $N = 512$ samples (2-second window duration) [4], supplemented by dynamic sequence lengths $N \in \{128, 256, 384, 512, 1023\}$ to verify variable-length container adaptability.
+
+To prevent the neural network from memorizing repetitive artifact templates across different clean epochs, a strict one-to-one random pairing scheme without duplication is enforced:
+1. **EOG Contamination Dataset:** Exactly $3,400$ unique clean EEG epochs are paired one-to-one at random with $3,400$ unique EOG artifact epochs.
+2. **EMG Contamination Dataset:** Exactly $4,514$ unique clean EEG epochs are paired one-to-one at random with $4,514$ unique EMG artifact epochs.
+
+#### 2.2.2. Power-Controlled Additive Contamination across Ten SNR Levels
+Each contaminated EEG epoch $\mathbf{y} = [y_0, y_1, \dots, y_{N-1}]^T \in \mathbb{R}^N$ is synthesized via linear superposition of a clean EEG epoch $\mathbf{x} \in \mathbb{R}^N$ and an artifact epoch $\mathbf{n} \in \mathbb{R}^N$, as expressed in Eq. (1):
+
+$$\mathbf{y} = \mathbf{x} + \alpha \cdot \mathbf{n} \qquad (1)$$
+
+Because intrinsic signal power varies across individual recordings, the artifact scaling coefficient $\alpha \in \mathbb{R}^+$ is computed adaptively for each paired sample so that the resulting mixture satisfies a prescribed input Signal-to-Noise Ratio ($\text{SNR}_{\text{in}}$, in dB) according to Eq. (2):
+
+$$\text{SNR}_{\text{in}} = 10 \log_{10} \left( \frac{\sum_{t=0}^{N-1} x_t^2}{\sum_{t=0}^{N-1} (\alpha \cdot n_t)^2} \right) \implies \alpha = \frac{\|\mathbf{x}\|_2}{\|\mathbf{n}\|_2 \cdot 10^{\left(\text{SNR}_{\text{in}} / 20\right)}} \qquad (2)$$
+
+where $\|\cdot\|_2$ denotes the Euclidean $\ell_2$-norm. Each unique pair is expanded across **10 discrete $\text{SNR}_{\text{in}}$ levels**, namely $\text{SNR}_{\text{in}} \in \{-7, -6, -5, -4, -3, -2, -1, 0, +1, +2\}\text{ dB}$, spanning extreme artifact corruption ($-7\text{ dB}$) to mild contamination ($+2\text{ dB}$).
+
+#### 2.2.3. Epoch-Index Partitioning Protocol for Zero Data Leakage
+A prevalent methodological flaw in EEG denoising literature is performing random train/test splitting after multi-SNR expansion, which causes identical underlying clean EEG waveforms to appear simultaneously in both training and testing sets at different SNR levels (*data leakage*). To eliminate this bias, dataset partitioning into Training (80%), Validation (10%), and Testing (10%) subsets is performed strictly **at the clean base-epoch index level prior to multi-SNR expansion**, as detailed in **Table 1**.
+
+*Table 1: Composition of the EOG and EMG Contamination Datasets under the Zero-Leakage Epoch-Index Partitioning Protocol*
+| Artifact Type | Unique Base Pairs | $\text{SNR}_{\text{in}}$ Levels (10 Steps) | Total Mixed Epochs | Training Set (80% Epochs) | Validation Set (10% Epochs) | Testing Set (10% Epochs) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **EOG (Ocular)** | $3,400$ | $-7\text{ dB}$ to $+2\text{ dB}$ | $34,000$ | $27,200$ (Indices $0\text{--}2,719$) | $3,400$ (Indices $2,720\text{--}3,059$) | $3,400$ (Indices $3,060\text{--}3,399$) |
+| **EMG (Muscular)** | $4,514$ | $-7\text{ dB}$ to $+2\text{ dB}$ | $45,140$ | $36,110$ (Indices $0\text{--}3,610$) | $4,510$ (Indices $3,611\text{--}4,061$) | $4,520$ (Indices $4,062\text{--}4,513$) |
+
+---
+
+### 2.3. Comparative Selection Framework across 26 Signal-to-Image Transformation Methods
+Selecting an optimal 2D representation for convolutional restoration requires empirical verification of both numerical invertibility and spatial neighborhood coherence. Accordingly, this subsection outlines the taxonomy of the 26 candidate 1D-to-2D transformation methods evaluated in our preliminary benchmark, defines the three-stage objective elimination protocol and its spatial topology metrics, and summarizes the quantitative findings that justify selecting the Hilbert RGBA PNG representation.
+
+#### 2.3.1. Taxonomy of the 26 Evaluated Transformation Candidates
+All 26 transformation candidates were benchmarked under identical conditions using the reference clinical EEG epoch from `Dataset/EOG/linear_synthetic.npy` at index 0 (`idx 0`, $\text{SNR}_{\text{in}} = -5\text{ dB}$, $N = 512$, `float32`). The evaluated methods encompass two major experimental suites:
+1. **Global Signal-to-Image Benchmark Suite (12 Methods):** Comprising *Space-Filling & Spatial Folding* methods (Hilbert RGBA PNG, Square Spiral RGBA PNG, Morton/Z-Order RGBA PNG, Raster RGBA PNG, and Raster Grayscale 8-bit PNG [7]), *Time-Frequency* representations (4-level Haar SWT [13], Complex STFT Real+Imag+LogMag, Magnitude STFT + Griffin-Lim, and Morlet CWT Scalogram), and *Dynamic Fields* (GASF, MTF, and Recurrence Plot).
+2. **Circular Mapping Taxonomy Benchmark Suite (14 Methods):** Comprising 9 *Group 1: Native Variable-Length* trajectories (Direct Polar Plot, Archimedean Spiral, Fermat Spiral, Vogel/Golden Spiral, Symmetric Dot Pattern/SDP, Hilbert Polar Map, Poincaré Polar Map, Complex FFT Polar, and Learnable Polar Map) and 5 *Group 2: Fixed-Grid* partitions (Polar Sector/Grid, Concentric Ring, Adaptive Polar-GAF, Polar Recurrence Plot, and Polar Scalogram) rendered on a $64 \times 64$ polar canvas.
+
+#### 2.3.2. Three-Stage Objective Elimination Protocol and Spatial Topology Metrics
+To systematically identify the optimal representation for 2D CNN/U-Net signal restoration, each candidate method was subjected to a **Three-Stage Objective Elimination Protocol**:
+
+1. **Stage 1 — Exact Binary Invertibility (*100% Bit-Exact Lossless Criterion*):**  
+   The round-trip transformation ($\mathbf{x} \xrightarrow{\text{Encode}} \mathbf{I} \xrightarrow{\text{Decode}} \hat{\mathbf{x}}$) must recover the 1D `float32` signal with zero numerical error in a compact, portable image container, satisfying Eq. (3) for reconstruction Root Mean Squared Error ($\text{RMSE}_{\text{rec}}$) and Percentage Root-mean-square Difference ($\text{PRD}$):
+
+$$\text{RMSE}_{\text{rec}} = \sqrt{\frac{1}{N} \sum_{t=0}^{N-1} \left( x_t - \hat{x}_t \right)^2} = 0.0, \quad \text{PRD} = \frac{\|\mathbf{x} - \hat{\mathbf{x}}\|_2}{\|\mathbf{x}\|_2} \times 100\% = 0.0\% \qquad (3)$$
+
+2. **Stage 2 — Temporal Path Continuity (*Unit Manhattan Step Criterion*):**  
+   Every consecutive temporal transition ($t \to t+1$) must map to an orthogonally adjacent pixel without row-wrap tears or diagonal quadrant jumps. The maximum spatial step ($\text{Max Jump } L_1$) must satisfy Eq. (4):
+
+$$\text{Max Jump } L_1 = \max_{0 \le t \le N-2} \left( |r_{t+1} - r_t| + |c_{t+1} - c_t| \right) = 1\text{ pixel} \qquad (4)$$
+
+3. **Stage 3 — 2D Spatial Neighbor Coherence for $3 \times 3$ Convolutions:**  
+   To maximize the inductive bias of $3 \times 3$ convolutional kernels, spatially adjacent pixels across the 2D lattice must exhibit strong amplitude correlation and smooth local gradients. This is quantified via **2D Spatial Neighbor Correlation ($r_{2D}$)** over all 4-connected orthogonal pixel pairs $\mathcal{E}_4$ and **Normalized 2D Total Variation ($\text{TV}_{\text{norm}}$)** over the active signal domain $\Omega_{\text{active}}$, defined in Eqs. (5) and (6):
+
+$$r_{2D} = \frac{\sum_{(u,v) \in \mathcal{E}_4} (I_u - \bar{I})(I_v - \bar{I})}{\sqrt{\sum_{(u,v) \in \mathcal{E}_4} (I_u - \bar{I})^2 \sum_{(u,v) \in \mathcal{E}_4} (I_v - \bar{I})^2}} \qquad (5)$$
+
+$$\text{TV}_{\text{norm}} = \frac{\sum_{(r,c) \in \Omega_{\text{active}}} \left( |I_{r+1,c} - I_{r,c}| + |I_{r,c+1} - I_{r,c}| \right)}{2 \cdot |\Omega_{\text{active}}| \cdot \sigma_I} \qquad (6)$$
+
+where $\bar{I}$ and $\sigma_I$ denote the mean and standard deviation of signal amplitudes within $\Omega_{\text{active}}$.
+
+#### 2.3.3. Empirical Selection Results and Justification of the Winning Representation
+As summarized in **Table 2**, 20 of the 26 candidates are eliminated in Stage 1 due to non-invertibility (MTF, RP, SDP, Poincaré, Polar RP), phase loss or polar raster collision (STFT Griffin-Lim $\text{PRD} = 146.22\%$, Morlet CWT $\text{PRD} = 83.08\%$, Complex FFT Polar $\text{PRD} = 74.88\%$, Polar Sector $\text{PRD} = 19.17\%$), 8-bit quantization error (Raster Gray8 $\text{PRD} = 0.60\%$), or quadratic memory expansion without portable PNG serialization (GASF $1,048.70\text{ KB}$). In Stage 2, Raster RGBA (`Max Jump = 32 px`), Morton RGBA (`Max Jump = 16 px`), Fermat Spiral (`Max Jump = 3 px`), and Vogel Spiral (`Max Jump = 76 px`, $r_{2D} = -0.0001$) are eliminated due to spatial path discontinuities. Finally, in Stage 3, **Hilbert RGBA PNG ($32 \times 32 \times 4$)** decisively outperforms Square Spiral RGBA PNG, achieving the highest lossless 2D spatial correlation ($r_{2D} = \mathbf{0.8228}$ vs. $0.5409$) and the lowest total variation ($\text{TV}_{\text{norm}} = \mathbf{0.3572}$ vs. $0.6020$) within a $2.10\text{ KB}$ container.
+
+*Table 2: Quantitative Benchmark of Representative 1D-to-2D Transformation Methods on Reference EEG Dataset Index 0 ($N = 512$)*
+| Transformation Method | Paradigm / Family | Dimensions | Bit-Exact (%) | $\text{RMSE}_{\text{rec}}$ | $\text{PRD}$ (%) | Max Jump $L_1$ | $r_{2D} (\uparrow)$ | $\text{TV}_{\text{norm}} (\downarrow)$ | File Size | Round-Trip | Selection Outcome |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Hilbert RGBA PNG** | **Space-Filling** | **`32×32×4`** | **100%** | **0.000000** | **0.0000%** | **1 px** | **0.8228** | **0.3572** | **2.10 KB** | **0.375 ms** | **Selected (Optimal)** |
+| Square Spiral RGBA PNG | Spiral Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 1 px | 0.5409 | 0.6020 | 2.12 KB | 0.311 ms | Eliminated Stage 3 (Low $r_{2D}$) |
+| Morton / Z-Order RGBA | Space-Filling | `32×32×4` | 100% | 0.000000 | 0.0000% | 16 px | 0.8172 | 0.3818 | 2.01 KB | 0.227 ms | Eliminated Stage 2 (16-px jump) |
+| Raster RGBA PNG | Spatial Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 32 px | 0.7205 | 0.4655 | 1.99 KB | 0.220 ms | Eliminated Stage 2 (32-px tear) |
+| Raster Gray8 PNG [7] | Spatial Folding | `32×32` | 0% | 0.010920 | 0.5996% | 32 px | 0.7205 | 0.4655 | 0.48 KB | 0.147 ms | Eliminated Stages 1 & 2 (Lossy) |
+| STFT Mag + Griffin-Lim | Time-Frequency | `33×33` | 0% | 2.662886 | 146.2180% | — | 0.8550 | 0.1627 | 4.48 KB | 13.546 ms | Eliminated Stage 1 (Phase loss) |
+| CWT Morlet Scalogram | Time-Frequency | `32×512` | 0% | 1.512942 | 83.0751% | — | 0.9625 | 0.1107 | 65.66 KB | 1.823 ms | Eliminated Stage 1 (Lossy ICWT) |
+| GASF ($N \times N$) | Dynamic Field | `512×512` | 0% | 0.000002 | 0.00009% | — | 0.9911 | 0.0883 | 1048.70 KB | 3.182 ms | Eliminated Stage 1 ($500\times$ size) |
+| MTF / Recurrence Plot | Dynamic Field | `512×512` | 0% | Non-Inv | Non-Inv | — | 0.8260 | 0.2406 | 1048.70 KB | — | Eliminated Stage 1 (Non-Inv) |
+| Direct Polar / Sector | Circular Mapping | `64×64` | 0% | 0.133–0.349 | 7.31–19.17% | 4–8 px | 0.47–0.81 | 0.24–0.28 | 16.50 KB | 0.280 ms | Eliminated Stage 1 (Pole/Seam) |
+| Fermat / Vogel Spiral | Circular Mapping | `64×64` | 100% | 0.000000 | 0.0000% | 3–76 px | 0.16 / -0.00 | 0.54–0.63 | 16.50 KB | 0.250 ms | Eliminated Stages 2 & 3 (Jumps) |
+
+---
+
+### 2.4. Mathematical Formulation of Order-5 Hilbert Curve and IEEE 754 RGBA Bit-Packing
+To construct a 2D image container that preserves single-precision floating-point EEG amplitudes without rounding error, fractal coordinate mapping must be coupled with byte-level bit serialization. This subsection formulates the three mathematical pillars of the proposed codec: discrete Order-5 Hilbert curve coordinate generation on a $32 \times 32$ lattice, bijective IEEE 754 `float32` bit-packing into 4-channel RGBA pixels, and functional canvas zoning with intrinsic terminal-pixel length metadata.
+
+#### 2.4.1. Discrete Hilbert Space-Filling Curve Topology
+Let $\mathcal{G}_k = \{0, 1, \dots, M-1\}^2 \subset \mathbb{Z}^2$ denote a 2D orthogonal lattice of dimension $M \times M$, where $M = 2^k$ and $k \in \mathbb{N}^+$ is the fractal recursion order. Setting $k = 5$ yields a fixed grid size of $M = 32$ with a total capacity of $M^2 = 1,024$ pixels. The discrete Hilbert space-filling curve defines a bijective spatial mapping $H_5$ from a 1D discrete index $d \in \mathcal{I}$ to a unique 2D row-column coordinate pair $\mathbf{p}(d) = (r_d, c_d)$, as expressed in Eq. (7):
+
+$$H_5: \mathcal{I} \to \mathcal{G}_5, \quad \mathcal{I} = \{0, 1, \dots, 1023\}, \quad d \mapsto \mathbf{p}(d) = (r_d, c_d) \qquad (7)$$
+
+For any linear index $d \in \mathcal{I}$, the Cartesian coordinates $(x, y)$ are computed iteratively across sub-quadrant scales $s = 2^m$ ($m = 0, 1, \dots, k-1$) by extracting binary quadrant rotation states $(rx, ry)$ according to Eq. (8):
+
+$$rx = 1 \ \& \ \left\lfloor \frac{t}{2} \right\rfloor, \quad ry = 1 \ \& \ (t \oplus rx), \quad \text{where } t = \left\lfloor \frac{d}{4^m} \right\rfloor \qquad (8)$$
+
+where $\&$ and $\oplus$ denote bitwise AND and XOR operations, respectively. At each scale $s$, the local coordinates $(x, y)$ undergo a quadrant reflection-rotation mapping $\mathcal{R}(s, x, y, rx, ry)$ defined in Eq. (9):
+
+$$\mathcal{R}(s, x, y, rx, ry) = \begin{cases} (s - 1 - y, \; s - 1 - x), & \text{if } ry = 0 \text{ and } rx = 1 \\ (y, \; x), & \text{if } ry = 0 \text{ and } rx = 0 \\ (x, \; y), & \text{if } ry = 1 \end{cases} \qquad (9)$$
+
+followed by quadrant translation $(x, y) \leftarrow (x + s \cdot rx, \; y + s \cdot ry)$ and matrix row-column assignment $(r_d, c_d) = (y, x)$. By mathematical induction over fractal order $k$, this mapping guarantees strict unit Manhattan ($\ell_1$) adjacency across the entire 1D trajectory, as stated in Eq. (10):
+
+$$\|\mathbf{p}(d+1) - \mathbf{p}(d)\|_1 = |r_{d+1} - r_d| + |c_{d+1} - c_d| = 1, \quad \forall d \in \{0, 1, \dots, 1022\} \qquad (10)$$
+
+#### 2.4.2. Byte-Exact IEEE 754 Single-Precision Bit-Packing into RGBA Channels
+Under the IEEE 754-2019 standard [16], each single-precision EEG amplitude sample $x_t \in \mathbb{R}$ (`float32`, little-endian `<f4`) occupies exactly 32 bits of memory, partitioned into a 1-bit sign $s \in \{0, 1\}$, an 8-bit biased exponent $e \in \{0, \dots, 255\}$, and a 23-bit mantissa fraction $m_i \in \{0, 1\}$ according to Eq. (11):
+
+$$x_t = (-1)^s \times 2^{e - 127} \times \left( 1 + \sum_{i=1}^{23} m_{23-i} 2^{-i} \right) \qquad (11)$$
+
+Because a 32-bit `float32` scalar ($4\text{ bytes}$) matches the exact bit width of a 4-channel 8-bit RGBA image pixel ($4 \times 8\text{ bits} = 32\text{ bits}$), we construct a bijective memory type-punning operator $\Phi: \mathbb{R}_{\text{float32}} \to \{0, 1, \dots, 255\}^4$. This operator maps the four constituent bytes $[\beta_0, \beta_1, \beta_2, \beta_3]$ of sample $x_t$ directly into the **Red (R), Green (G), Blue (B), and Alpha (A)** channels at Hilbert coordinate $(r_t, c_t)$, as formulated in Eq. (12):
+
+$$\mathbf{I}(r_t, c_t, :) = \Phi(x_t) = \begin{bmatrix} R(r_t, c_t) \\ G(r_t, c_t) \\ B(r_t, c_t) \\ A(r_t, c_t) \end{bmatrix} = \begin{bmatrix} \beta_0(x_t) \\ \beta_1(x_t) \\ \beta_2(x_t) \\ \beta_3(x_t) \end{bmatrix} = \text{reinterpret\_cast}\langle\text{uint8}[4]\rangle(x_t) \qquad (12)$$
+
+where $\beta_0$ represents the least significant byte (LSB) of the mantissa and $\beta_3$ represents the most significant byte (MSB) containing the sign bit $s$ and the upper 7 exponent bits.
+
+#### 2.4.3. Canvas Functional Zoning and Self-Contained Dynamic Length Metadata
+To accommodate variable-length signals ($1 \le N \le 1023$) within a constant $32 \times 32 \times 4$ physical image container without external metadata files, the $1,024$ Hilbert coordinates are partitioned into three functional zones:
+1. **Active Signal Zone ($0 \le d \le N-1$):** Stores the 4-byte IEEE 754 `float32` representations of active samples $x_0, x_1, \dots, x_{N-1}$.
+2. **Zero-Padding Zone ($N \le d \le 1022$):** Filled with zero bytes `[0, 0, 0, 0]` (`uint8`).
+3. **Terminal Metadata Zone ($d_{\text{term}} = M^2 - 1 = 1023$, located at top-right coordinate $(r, c) = (0, 31)$):** Permanently reserved to store the exact sequence length $N$ encoded as a 32-bit little-endian unsigned integer (`uint32` / `<u4`), as defined in Eq. (13):
+
+$$\mathbf{I}(0, 31, :) = \Phi_{\text{meta}}(N) = \text{reinterpret\_cast}\langle\text{uint8}[4]\rangle(\text{uint32}(N)) \qquad (13)$$
+
+The complete encoding and bit-exact decoding procedures are formally specified in **Algorithm 1**.
+
+```text
+================================================================================
+Algorithm 1: Lossless Hilbert RGBA PNG Encoding and Bit-Exact Decoding
+================================================================================
+Input (Encode) : 1D EEG signal x ∈ ℝ^N (float32), Grid size M = 32 (Order k = 5)
+Output (Encode): Lossless RGBA PNG file / array I ∈ {0..255}^{M × M × 4}
+--------------------------------------------------------------------------------
+[Encoding Procedure: Signal 1D -> Hilbert RGBA PNG]
+1: Assert 1 <= N <= M^2 - 1 (i.e., 1 <= N <= 1023)
+2: (R, C) <- Precompute_Hilbert_Coordinates(M)          // Eqs. (7)-(9)
+3: Initialize I <- Zeros(M, M, 4, dtype=uint8)
+4: B_sig <- reinterpret_cast<uint8[N, 4]>(ascontiguous(x, dtype="<f4"))
+5: For t = 0 to N - 1 do:
+6:     I[R[t], C[t], 0:4] <- B_sig[t, 0:4]              // Eq. (12)
+7: End For
+8: I[R[M^2 - 1], C[M^2 - 1], 0:4] <- reinterpret_cast<uint8[4]>(uint32(N)) // Eq. (13) at (0, 31)
+9: Save I to PNG container using lossless Deflate compression
+
+[Decoding Procedure: Hilbert RGBA PNG -> Signal 1D]
+10: Read RGBA array I ∈ {0..255}^{M × M × 4} from PNG container
+11: N <- reinterpret_cast<uint32>(I[R[M^2 - 1], C[M^2 - 1], 0:4])[0]
+12: Assert 1 <= N <= M^2 - 1
+13: B_rec <- ascontiguous(I[R[0:N], C[0:N], 0:4])
+14: x_hat <- reinterpret_cast<float32[N]>(B_rec)
+15: Return x_hat (satisfying x_hat == x bit-for-bit, max|x - x_hat| = 0.0)
+================================================================================
+```
+
+---
+
+### 2.5. Dual-Channel Spatial Tensor Extraction and 2D Hilbert Res-UNet Architecture
+Because raw IEEE 754 exponent and mantissa bytes behave non-linearly under arithmetic addition and multiplication, applying convolutional kernels directly to `uint8` RGBA channels would corrupt the floating-point values. Therefore, this subsection details the extraction of a dual-channel `float32` spatial tensor (`[2, 32, 32]`) designed to preserve algebraic linearity and suppress zero-padding bias, followed by the architectural specification of the proposed **2D Hilbert Residual U-Net (`HilbertUNet`)** with Bottleneck Multi-Head Self-Attention.
+
+#### 2.5.1. Dual-Channel Neural Input Grid Formulation (`[2, 32, 32]`)
+During neural network inference and training, the Hilbert RGBA PNG container is unpacked back into continuous `float32` amplitudes and formatted into a **dual-channel spatial tensor** $\mathbf{G} \in \mathbb{R}^{2 \times 32 \times 32}$ according to Eqs. (14) and (15):
+
+$$\mathbf{G}_{0, r_d, c_d} = \begin{cases} x_d, & \text{if } 0 \le d < N \quad (\text{Channel 0: Continuous EEG Amplitude Plane}) \\ 0.0, & \text{if } N \le d \le 1023 \quad (\text{Zero-Padding \& Terminal Metadata Pixel}) \end{cases} \qquad (14)$$
+
+$$\mathbf{G}_{1, r_d, c_d} = \begin{cases} 1.0, & \text{if } 0 \le d < N \quad (\text{Channel 1: Binary Active Signal Mask}) \\ 0.0, & \text{if } N \le d \le 1023 \quad (\text{Inactive Padding / Metadata Mask}) \end{cases} \qquad (15)$$
+
+Providing **Channel 1 (Binary Active Mask)** supplies explicit spatial boundary conditioning to $3 \times 3$ convolutional filters and Group Normalization layers, preventing zero-valued padding pixels from skewing feature statistics or being misinterpreted as flat $0\,\mu\text{V}$ cerebral activity.
+
+#### 2.5.2. 2D Hilbert Residual U-Net (`HilbertUNet`) and False-Neighbor Mitigation
+The proposed **`HilbertUNet`** is a lightweight, symmetric residual encoder-decoder architecture comprising **$786,241$ trainable parameters** ($\approx 3.0\text{ MB}$), as detailed in **Table 3**. Its core architectural components are tailored to the topological properties of Hilbert-mapped EEG grids:
+
+1. **Pre-Activation Residual Blocks with GroupNorm and GELU (`ResBlock2D`):**  
+   Each residual block computes $\mathbf{z}_{\text{out}} = \mathbf{z}_{\text{in}} + \mathcal{F}(\mathbf{z}_{\text{in}})$ using two sequential `[GroupNorm(8) → GELU → Conv2d(3×3, pad=1)]` units separated by spatial dropout `Dropout2d(p=0.05)`. Group Normalization (8 channel groups) is adopted over Batch Normalization so that feature normalization is computed per individual sample, ensuring stable single-sample ($bs=1$) real-time inference. The **Gaussian Error Linear Unit (GELU)** activation ($\text{GELU}(z) = z \cdot \Phi(z)$) replaces standard ReLU to preserve negative-polarity EEG troughs without zero-clipping dead neurons.
+2. **Strided Convolution Encoder Hierarchy:**  
+   An initial `Stem Conv2d(3×3)` layer expands the 2-channel input into $C_0 = 24$ feature maps at $32 \times 32$ resolution. Three encoder stages (`Encoder 1–3`) refine local features and progressively downsample spatial dimensions ($32 \times 32 \to 16 \times 16 \to 8 \times 8 \to 4 \times 4$) via learnable strided convolutions `Conv2d(kernel=2, stride=2)` while expanding channel depth ($24 \to 48 \to 96 \to 96$), avoiding the phase-shifting information loss associated with non-learnable Max-Pooling.
+3. **Bottleneck Multi-Head Self-Attention for False-Neighbor Mitigation:**  
+   While the Hilbert curve guarantees that consecutive temporal samples ($t, t+1$) are always orthogonal 2D neighbors ($\|\Delta \mathbf{p}\|_1 = 1$), fractal folding inevitably introduces **false neighbors**: spatially adjacent pixels across quadrant boundaries that correspond to distant temporal indices (on a $32 \times 32$ grid, 76 adjacent pixel pairs exhibit temporal gaps $\Delta t > 100$ samples, with a maximum gap of $\Delta t = 853$ samples). To prevent local convolutions from being misled by these boundary folds, the deepest bottleneck feature map $\mathbf{B} \in \mathbb{R}^{B \times 96 \times 4 \times 4}$ is flattened into $L = 16$ spatial tokens $\mathbf{T} \in \mathbb{R}^{B \times 16 \times 96}$—representing the 16 primary Hilbert sub-quadrants—and processed by a residual **Multi-Head Self-Attention (MHA)** layer ($H = 4$ heads, head dimension $d_k = 24$) as defined in Eq. (16):
+
+$$\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\frac{\mathbf{Q}\mathbf{K}^T}{\sqrt{d_k}}\right)\mathbf{V}, \quad \mathbf{T}_{\text{out}} = \mathbf{T} + \text{MHA}(\mathbf{T}, \mathbf{T}, \mathbf{T}) \qquad (16)$$
+
+   This global attention mechanism dynamically weighs inter-quadrant dependencies across the entire recording window.
+4. **Symmetric Decoder and Lateral Skip Connections:**  
+   Three decoder stages (`Decoder 3–1`) restore spatial resolution ($4 \times 4 \to 8 \times 8 \to 16 \times 16 \to 32 \times 32$) via transposed convolutions `ConvTranspose2d(kernel=2, stride=2)`. At each scale, upsampled features are concatenated with lateral skip connections from the corresponding encoder stage, fused via `Conv2d(1×1)`, and refined by a `ResBlock2D` module. These lateral pathways preserve sharp, high-frequency cerebral waveform peaks during artifact suppression. Finally, a `Head Conv2d(1×1)` layer projects the 24 feature maps onto a single denoised spatial grid $\hat{\mathbf{G}}_0 \in \mathbb{R}^{B \times 1 \times 32 \times 32}$.
+
+*Table 3: Layer-by-Layer Architectural Specification of the Proposed `HilbertUNet` 2D Network ($786,241$ Parameters)*
+| Module / Stage | Layer Configuration & Operators | Input Tensor Shape | Output Tensor Shape | Physical & Architectural Role |
+| :--- | :--- | :---: | :---: | :--- |
+| **Input & Stem** | `Conv2d(2, 24, k=3, s=1, p=1)` | $(B, 2, 32, 32)$ | $(B, 24, 32, 32)$ | Joint feature projection of amplitude & active mask |
+| **Encoder 1** | `ResBlock2D(24)` + `Conv2d(24, 48, k=2, s=2)` | $(B, 24, 32, 32)$ | Skip $h_1: (B, 24, 32, 32)$<br>Down: $(B, 48, 16, 16)$ | Fine-scale local waveform morphology extraction |
+| **Encoder 2** | `ResBlock2D(48)` + `Conv2d(48, 96, k=2, s=2)` | $(B, 48, 16, 16)$ | Skip $h_2: (B, 48, 16, 16)$<br>Down: $(B, 96, 8, 8)$ | Intermediate-scale artifact pattern isolation |
+| **Encoder 3** | `ResBlock2D(96)` + `Conv2d(96, 96, k=2, s=2)` | $(B, 96, 8, 8)$ | Skip $h_3: (B, 96, 8, 8)$<br>Down: $(B, 96, 4, 4)$ | Macro-scale sub-quadrant feature abstraction |
+| **Bottleneck** | `ResBlock2D(96)` + `MultiheadAttention(96, H=4)` | $(B, 96, 4, 4)$ | $(B, 96, 4, 4)$ | Global 16-quadrant context & false-neighbor mitigation |
+| **Decoder 3** | `ConvTranspose2d(k=2,s=2)` + `Cat(h3)` + `Conv1×1` + `ResBlock2D(96)` | $(B, 96, 4, 4)$ | $(B, 96, 8, 8)$ | Coarse $8 \times 8$ spatial restoration with skip fusion $h_3$ |
+| **Decoder 2** | `ConvTranspose2d(k=2,s=2)` + `Cat(h2)` + `Conv1×1` + `ResBlock2D(48)` | $(B, 96, 8, 8)$ | $(B, 48, 16, 16)$ | Mid-level $16 \times 16$ restoration with skip fusion $h_2$ |
+| **Decoder 1** | `ConvTranspose2d(k=2,s=2)` + `Cat(h1)` + `Conv1×1` + `ResBlock2D(24)` | $(B, 48, 16, 16)$ | $(B, 24, 32, 32)$ | Full-resolution peak sharpness recovery ($32 \times 32$) |
+| **Output Head** | `Conv2d(24, 1, k=1, s=1)` + *Hilbert Path Unfolding* | $(B, 24, 32, 32)$ | Grid: $(B, 1, 32, 32)$<br>1D: $\hat{\mathbf{x}} \in \mathbb{R}^{B \times N}$ | Clean amplitude projection & 1D sequence unfolding |
+
+---
+
+### 2.6. Time-Frequency Hybrid Loss Function and Training Protocol
+The design of the training objective directly governs whether a denoising network preserves physiological brain rhythms while suppressing high-energy artifacts. Accordingly, this subsection formulates the Time-Frequency Hybrid Loss function combining time-domain waveform supervision and orthonormal Fourier magnitude supervision, specifies the optimization hyperparameters, and outlines the 11-model 2D architectural ablation protocol.
+
+#### 2.6.1. Time-Frequency Hybrid Loss Formulation
+Relying solely on time-domain point-wise error (such as pure MSE) biases neural networks toward over-smoothed predictions that attenuate low-amplitude, high-frequency cerebral rhythms ($\beta$ and $\gamma$). To enforce simultaneous fidelity in both temporal morphology and spectral power distribution, the active 1D waveform unfolded from the predicted Hilbert grid, $\hat{\mathbf{x}} = \hat{\mathbf{G}}_{0, \mathbf{R}_{0:N}, \mathbf{C}_{0:N}} \in \mathbb{R}^N$, is supervised against the clean reference $\mathbf{x} \in \mathbb{R}^N$ using a **Time-Frequency Hybrid Loss** ($\mathcal{L}_{\text{hybrid}}$), defined in Eq. (17):
+
+$$\mathcal{L}_{\text{hybrid}}(\mathbf{x}, \hat{\mathbf{x}}) = \underbrace{\frac{1}{N} \sum_{t=0}^{N-1} \left( x_t - \hat{x}_t \right)^2}_{\mathcal{L}_{\text{time}} \text{ (Time-Domain MSE)}} + \lambda_{\text{spec}} \cdot \underbrace{\frac{1}{K} \sum_{k=0}^{K-1} \Big| \left|\mathcal{F}_{\text{RFFT}}(\mathbf{x})_k\right| - \left|\mathcal{F}_{\text{RFFT}}(\hat{\mathbf{x}})_k\right| \Big|}_{\mathcal{L}_{\text{freq}} \text{ (Orthonormal Spectral }\ell_1\text{ Loss)}} \qquad (17)$$
+
+where $\mathcal{F}_{\text{RFFT}}(\cdot)$ denotes the 1D Real Fast Fourier Transform with orthonormal normalization (`norm="ortho"`), $K = \lfloor N/2 \rfloor + 1$ represents the number of positive frequency bins ($K = 257$ for $N = 512$), and the spectral weighting coefficient is set to $\lambda_{\text{spec}} = 0.8$.
+
+#### 2.6.2. Hyperparameter Configuration and 11-Model 2D Ablation Protocol
+Network parameters are optimized using the **AdamW** optimizer with an initial learning rate $\eta_0 = 1.5 \times 10^{-3}$, weight decay $\lambda_w = 5 \times 10^{-4}$, batch size $B = 256$, and a **Cosine Annealing** learning rate schedule ($\text{CosineAnnealingLR}$). To prevent gradient explosion from large-amplitude ocular transients, gradient norm clipping is enforced at $\|\nabla \mathcal{L}_{\text{hybrid}}\|_2 \le 1.0$. Model checkpoints are evaluated on the independent validation split at the end of every epoch, retaining the weights achieving the lowest validation $\text{RMSE}$.
+
+Furthermore, to isolate the contribution of each architectural component under fair experimental conditions, an **11-Model 2D Architectural Feasibility and Ablation Protocol** is conducted wherein all models process the identical $32 \times 32$ Hilbert input representation: *(1) 2D Plain CNN Autoencoder, (2) 2D ResNet, (3) 2D DenseNet, (4) 2D MobileNet Separable CNN, (5) 2D Vanilla U-Net [5], (6) 2D Hilbert Res-UNet 1-Channel (ablation without binary mask), (7) 2D Hilbert Res-UNet 2-Channel without Self-Attention (ablation without bottleneck attention), (8) 2D Attention U-Net (Gate Attention), (9) 2D Vision Transformer (ViT Hilbert), (10) 2D ConvNeXt-Style Hilbert,* and *(11) Proposed 2D Hilbert Res-UNet + Bottleneck Self-Attention*.
+
+---
+
+### 2.7. Inverse 1D Signal Reconstruction and Quantitative Evaluation Metrics
+The final stage of the methodology reconstructs the 1D time-series from the denoised 2D Hilbert container and quantifies restoration performance across time, frequency, and computational latency dimensions. This subsection describes the deterministic inverse unfolding procedure, defines the five standard quantitative denoising metrics, and details the real-time latency profiling protocol.
+
+#### 2.7.1. Deterministic Inverse Unfolding to 1D Time-Series
+Following spatial inference, the denoised grid $\hat{\mathbf{G}}_0 \in \mathbb{R}^{1 \times 32 \times 32}$ is packed into an output Hilbert RGBA PNG container $\hat{\mathbf{I}} \in \{0, \dots, 255\}^{32 \times 32 \times 4}$ along with the sequence length metadata $N$ at terminal coordinate $(0, 31)$. Executing the decoding procedure in **Algorithm 1** (Lines 10–15), the decoder extracts the `uint32` length $N$ from pixel $(0, 31)$, gathers the first $N$ pixels along the precomputed Hilbert trajectory $(\mathbf{R}_{0:N}, \mathbf{C}_{0:N})$, and reinterprets the 4-byte `[R, G, B, A]` blocks back into a clean 1D `float32` EEG signal $\hat{\mathbf{x}} \in \mathbb{R}^N$ with zero container distortion ($\max_t |\hat{x}_t^{\text{grid}} - \hat{x}_t^{\text{PNG}}| = 0.0$).
+
+#### 2.7.2. Multi-Domain Signal Restoration Evaluation Metrics
+Denoising performance on the unseen testing set is evaluated at each input contamination level $\text{SNR}_{\text{in}} \in [-7, +2]\text{ dB}$ using five standard biomedical signal restoration metrics [4], [7], [11], formulated in Eqs. (18)–(22):
+
+1. **Root Mean Squared Error ($\text{RMSE}$):**
+   $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{t=0}^{N-1} \left( \hat{x}_t - x_t \right)^2} \qquad (18)$$
+2. **Time-Domain Relative Root Mean Squared Error ($\text{RRMSE}_t$):**
+   $$\text{RRMSE}_t = \frac{\|\hat{\mathbf{x}} - \mathbf{x}\|_2}{\|\mathbf{x}\|_2} = \sqrt{\frac{\sum_{t=0}^{N-1} (\hat{x}_t - x_t)^2}{\sum_{t=0}^{N-1} x_t^2}} \qquad (19)$$
+3. **Spectral-Domain Relative Root Mean Squared Error ($\text{RRMSE}_s$):**
+   $$\text{RRMSE}_s = \frac{\big\| |\mathcal{F}_{\text{RFFT}}(\hat{\mathbf{x}})| - |\mathcal{F}_{\text{RFFT}}(\mathbf{x})| \big\|_2}{\big\| |\mathcal{F}_{\text{RFFT}}(\mathbf{x})| \big\|_2} \qquad (20)$$
+4. **Pearson Correlation Coefficient ($CC$):**
+   $$CC = \frac{\sum_{t=0}^{N-1} (x_t - \bar{x})(\hat{x}_t - \bar{\hat{x}})}{\sqrt{\sum_{t=0}^{N-1} (x_t - \bar{x})^2 \sum_{t=0}^{N-1} (\hat{x}_t - \bar{\hat{x}})^2}} \qquad (21)$$
+5. **Signal-to-Noise Ratio Improvement ($\Delta\text{SNR}$, in dB):**
+   $$\text{SNR}_{\text{out}} = 20 \log_{10} \left( \frac{\|\mathbf{x}\|_2}{\|\hat{\mathbf{x}} - \mathbf{x}\|_2} \right), \quad \Delta\text{SNR} = \text{SNR}_{\text{out}} - \text{SNR}_{\text{in}} \qquad (22)$$
+
+#### 2.7.3. Computational Latency and Real-Time Throughput Profiling
+To verify real-time applicability for online BCI pipelines, execution latency is profiled across three constituent stages: 1D-to-PNG encoding latency ($T_{\text{encode}}$), `HilbertUNet` 2D inference latency ($T_{\text{infer}}$), and PNG-to-1D decoding latency ($T_{\text{decode}}$). Total end-to-end latency per epoch ($T_{\text{total}} = T_{\text{encode}} + T_{\text{infer}} + T_{\text{decode}}$, in milliseconds) and system throughput ($1000 / T_{\text{total}}$, in samples/second) are benchmarked under both in-memory buffer streaming (`io.BytesIO`) and physical disk PNG file I/O ($bs = 1$, averaged over $50$ consecutive runs).
+
+---
+
+## CRediT Authorship Contribution Statement & Declarations
+
+The following declarations are provided in compliance with Elsevier and IEEE Scopus journal submission policies.
+
+* **CRediT Authorship Contribution Statement:** **First Author:** Conceptualization, Methodology, Software, Validation, Formal analysis, Investigation, Writing – Original Draft, Visualization. **Second & Third Authors:** Supervision, Methodology Review, Validation, Writing – Review & Editing.
+* **Declaration of Competing Interest:** The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+* **Data and Code Availability:** The source code for the lossless Hilbert RGBA PNG codec, the `HilbertUNet` 2D architecture, and the 26-method comparative benchmark notebooks are available in the project repository to support full reproducibility.
+
+---
+
+## References
+
+The references below are formatted in strict accordance with the IEEE Transactions citation standard for Scopus-indexed engineering and biomedical journals.
+
+[1] H. Zeng *et al.*, "EEG-based brain-computer interfaces with deep learning: A survey," *IEEE Trans. Neural Syst. Rehabil. Eng.*, vol. 29, pp. 1689–1700, 2021.  
+[2] R. J. Croft and R. J. Barry, "Removal of ocular artifact from the EEG: A review," *Neurophysiol. Clin./Clin. Neurophysiol.*, vol. 30, no. 1, pp. 5–19, 2000.  
+[3] X. Jiang, G.-B. Bian, and Z. Tian, "Removal of artifacts from EEG signals: A review," *Sensors*, vol. 19, no. 5, p. 987, 2019.  
+[4] H. Zhang *et al.*, "EEGdenoiseNet: A benchmark dataset for end-to-end deep learning solutions of EEG denoising," *J. Neural Eng.*, vol. 18, no. 5, p. 056057, 2021.  
+[5] O. Ronneberger, P. Fischer, and T. Brox, "U-Net: Convolutional networks for biomedical image segmentation," in *Proc. Int. Conf. Med. Image Comput. Comput.-Assist. Interv. (MICCAI)*, 2015, pp. 234–241.  
+[6] A. Vaswani *et al.*, "Attention is all you need," in *Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)*, vol. 30, 2017, pp. 5998–6008.  
+[7] N. Mashhadi, M. Khoshnevisan, and S. Ostadabbas, "A 2D U-Net convolutional neural network for physiological signal denoising," *arXiv preprint arXiv:2009.08809*, 2020.  
+[8] C. Yan and T. Wu, "Two-dimensional time-frequency representation and non-local means filtering for EEG artifact removal," *Front. Neurosci.*, vol. 16, p. 991136, 2022.  
+[9] C.-H. Chuang *et al.*, "IC-U-Net: A U-Net-based denoising autoencoder using mixtures of independent components for automatic EEG artifact removal," *NeuroImage*, vol. 263, p. 119586, 2022.  
+[10] J. Huang *et al.*, "EEG signal denoising based on 2D image representation and GCANet architecture," *J. Netw. Intell.*, vol. 8, no. 4, 2023.  
+[11] Y. Pei *et al.*, "DTP-Net: Densely connected temporal pyramid network with 2D time-frequency representation for EEG artifact removal," *IEEE J. Biomed. Health Inform.*, vol. 28, no. 5, 2024.  
+[12] Y. Liu *et al.*, "E2CAR: Hardware-accelerated 2D-CNN framework for real-time EEG artifact removal," *arXiv preprint arXiv:2602.09035*, 2026.  
+[13] "SWTT: Stationary wavelet transform and transformer self-attention framework for biosignal restoration," *Electronics*, 2026.  
+[14] D. Hilbert, "Über die stetige Abbildung einer Linie auf ein Flächenstück," *Math. Ann.*, vol. 38, no. 3, pp. 459–460, 1891.  
+[15] H. Sagan, *Space-Filling Curves*. New York, NY, USA: Springer-Verlag, 1994.  
+[16] *IEEE Standard for Floating-Point Arithmetic*, IEEE Std 754-2019, 2019.
