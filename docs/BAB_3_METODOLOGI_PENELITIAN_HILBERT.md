@@ -114,22 +114,24 @@ Selain itu, hasil output **Uji Panjang Sinyal Dinamis ($N \in \{128, 256, 384, 5
 Tabel 3.2 menyajikan hasil pengukuran kuantitatif dari output eksekusi notebook `compare_circular_mapping_methods.ipynb` pada sinyal EEG nyata Dataset Index 0 ($N=512$) ($N=512$, kanvas polar $64 \times 64$):
 
 *Tabel 3.2: Hasil Output Eksperimen Perbandingan 14 Varian Circular Mapping pada Sinyal Dataset Index 0 (`EOG SNR -5 dB, idx 0`, $N=512$, Kanvas $64 \times 64$)*
-| No | Kandidat Metode Transformasi | Kelompok Mekanisme | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Galat Relatif (PRD %) | Langkah Maksimum | Korelasi Spasial 2D ($r_{2D} \uparrow$) | Kehalusan Spasial (Norm TV $\downarrow$) | Patahan Sudut (*Seam Jump* $\downarrow$) | Ukuran Berkas per Sinyal |
-|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 1 | Direct Polar Plot | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,133059 | 7,3062% | 4 piksel | 0,4741 | 0,2427 | 0,0461 | 16,5 KB |
-| 2 | Archimedean Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,481926 | 26,4624% | 5 piksel | 0,1637 | 0,4730 | 0,0362 | 16,5 KB |
-| 3 | Fermat Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | 0,0000% | **3 piksel** | 0,1625 | 0,5403 | 0,2066 | 16,5 KB |
-| 4 | Vogel / Golden Spiral | Kelompok 1 (Langsung Variabel) | `64×64` | 100% (Lossless) | 0,000000 | 0,0000% | **76 piksel** | **-0,0001** | 0,6302 | 0,1782 | 16,5 KB |
-| 5 | Symmetric Dot (SDP) | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,7678 | 0,4032 | 0,0000 | 16,5 KB |
-| 6 | Hilbert Polar Map | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,063951 | 3,5115% | 10 piksel | 0,2607 | 0,3383 | 0,0303 | 16,5 KB |
-| 7 | Poincaré Polar Map | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,7295 | 0,2228 | 0,0139 | 16,5 KB |
-| 8 | Complex FFT Polar | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 1,363625 | 74,8761% | 50 piksel | 0,3285 | 0,2226 | **1,0012** | 16,5 KB |
-| 9 | Learnable Polar Map | Kelompok 1 (Langsung Variabel) | `64×64` | 0% (Lossy) | 0,545156 | 29,9343% | 9 piksel | 0,0776 | 0,5534 | 0,0145 | 16,5 KB |
-| 10 | Polar Sector / Grid | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 0,349102 | 19,1690% | 8 piksel | 0,8105 | 0,2827 | 0,3828 | 16,5 KB |
-| 11 | Concentric Ring | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 0,295122 | 16,2051% | 7 piksel | 0,1754 | 0,4818 | 0,0793 | 16,5 KB |
-| 12 | Adaptive Polar-GAF | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 2,691449 | 147,7864% | — | 0,2601 | 0,5457 | 0,0000 | 16,5 KB |
-| 13 | Polar Recurrence Plot | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | Non-Inv | — | 0,2000 | 0,2703 | 0,0000 | 16,5 KB |
-| 14 | Polar Scalogram | Kelompok 2 (Grid Tetap) | `64×64` | 0% (Lossy) | 1,631531 | 89,5868% | — | 0,4221 | 0,5908 | 0,1684 | 16,5 KB |
+| No | Kandidat Metode Transformasi | Kelompok Mekanisme | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Langkah Maksimum | Korelasi Spasial 2D | Ukuran Berkas per Sinyal |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| | **KELOMPOK 1: LANGSUNG VARIABEL** | | | | | | | |
+| 1 | Direct Polar Plot | Langsung Variabel | `64x64` | 0% (Lossy) | 0,133059 | 4 piksel | 0,4741 | 1,42 KB |
+| 2 | Archimedean Spiral | Langsung Variabel | `64x64` | 0% (Lossy) | 0,481926 | 5 piksel | 0,1637 | 2,40 KB |
+| 3 | Fermat Spiral | Langsung Variabel | `64x64` | 100% (Lossless) | 0,000000 | 3 piksel | 0,1625 | 2,78 KB |
+| 4 | Vogel / Golden Spiral | Langsung Variabel | `64x64` | 100% (Lossless) | 0,000000 | 76 piksel | -0,0001 | 2,88 KB |
+| 5 | Symmetric Dot (SDP) | Langsung Variabel | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7678 | 2,18 KB |
+| 6 | Hilbert Polar Map | Langsung Variabel | `64x64` | 0% (Lossy) | 0,063951 | 10 piksel | 0,2607 | 1,64 KB |
+| 7 | Poincaré Polar Map | Langsung Variabel | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7295 | 0,67 KB |
+| 8 | Complex FFT Polar | Langsung Variabel | `64x64` | 0% (Lossy) | 1,363625 | 50 piksel | 0,3285 | 1,06 KB |
+| 9 | Learnable Polar Map | Langsung Variabel | `64x64` | 0% (Lossy) | 0,545156 | 9 piksel | 0,0776 | 2,61 KB |
+| | **KELOMPOK 2: GRID TETAP** | | | | | | | |
+| 10 | Polar Sector / Grid | Grid Tetap | `64x64` | 0% (Lossy) | 0,349102 | 8 piksel | 0,8105 | 4,96 KB |
+| 11 | Concentric Ring | Grid Tetap | `64x64` | 0% (Lossy) | 0,295122 | 7 piksel | 0,1754 | 2,43 KB |
+| 12 | Adaptive Polar-GAF | Grid Tetap | `64x64` | 0% (Lossy) | 2,691449 | — | 0,2601 | 2,07 KB |
+| 13 | Polar Recurrence Plot | Grid Tetap | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,2000 | 0,25 KB |
+| 14 | Polar Scalogram | Grid Tetap | `64x64` | 0% (Lossy) | 1,631531 | — | 0,4221 | 8,00 KB |
 
 *\*(Catatan Metodologis: Metode EEG Topographic Map / AEP sengaja tidak disertakan dalam tabel perbandingan karena metode tersebut mensyaratkan rekaman spasial 3D multi-kanal dari banyak elektroda kepala, sedangkan penelitian ini berfokus murni pada restorasi deret waktu satu dimensi / single-channel EEG).*
 

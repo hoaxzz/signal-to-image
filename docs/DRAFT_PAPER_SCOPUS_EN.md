@@ -186,22 +186,43 @@ $$\text{TV}_{\text{norm}} = \frac{\sum_{(r,c) \in \Omega_{\text{active}}} \left(
 where $\bar{I}$ and $\sigma_I$ denote the mean and standard deviation of signal amplitudes within $\Omega_{\text{active}}$.
 
 #### 2.3.3. Empirical Selection Results and Justification of the Winning Representation
-As summarized in **Table 2**, 20 of the 26 candidates are eliminated in Stage 1 due to non-invertibility (MTF, RP, SDP, Poincaré, Polar RP), phase loss or polar raster collision (STFT Griffin-Lim $\text{PRD} = 146.22\%$, Morlet CWT $\text{PRD} = 83.08\%$, Complex FFT Polar $\text{PRD} = 74.88\%$, Polar Sector $\text{PRD} = 19.17\%$), 8-bit quantization error (Raster Gray8 $\text{PRD} = 0.60\%$), or quadratic memory expansion without portable PNG serialization (GASF $1,048.70\text{ KB}$). In Stage 2, Raster RGBA (`Max Jump = 32 px`), Morton RGBA (`Max Jump = 16 px`), Fermat Spiral (`Max Jump = 3 px`), and Vogel Spiral (`Max Jump = 76 px`, $r_{2D} = -0.0001$) are eliminated due to spatial path discontinuities. Finally, in Stage 3, **Hilbert RGBA PNG ($32 \times 32 \times 4$)** decisively outperforms Square Spiral RGBA PNG, achieving the highest lossless 2D spatial correlation ($r_{2D} = \mathbf{0.8228}$ vs. $0.5409$) and the lowest total variation ($\text{TV}_{\text{norm}} = \mathbf{0.3572}$ vs. $0.6020$) within a $2.10\text{ KB}$ container.
+As summarized in **Table 2** and **Table 3**, 20 of the 26 candidates are eliminated in Stage 1 due to non-invertibility (MTF, RP, SDP, Poincaré, Polar RP), phase loss or polar raster collision (STFT Griffin-Lim $\text{PRD} = 146.22\%$, Morlet CWT $\text{PRD} = 83.08\%$, Complex FFT Polar $\text{PRD} = 74.88\%$, Polar Sector $\text{PRD} = 19.17\%$), 8-bit quantization error (Raster Gray8 $\text{PRD} = 0.60\%$), or quadratic memory expansion without portable PNG serialization (GASF $1,048.70\text{ KB}$). In Stage 2, Raster RGBA (`Max Jump = 32 px`), Morton RGBA (`Max Jump = 16 px`), Fermat Spiral (`Max Jump = 3 px`), and Vogel Spiral (`Max Jump = 76 px`, $r_{2D} = -0.0001$) are eliminated due to spatial path discontinuities. Finally, in Stage 3, **Hilbert RGBA PNG ($32 \times 32 \times 4$)** decisively outperforms Square Spiral RGBA PNG, achieving the highest lossless 2D spatial correlation ($r_{2D} = \mathbf{0.8228}$ vs. $0.5409$) and the lowest total variation ($\text{TV}_{\text{norm}} = \mathbf{0.3572}$ vs. $0.6020$) within a $2.10\text{ KB}$ container.
 
-*Table 2: Quantitative Benchmark of Representative 1D-to-2D Transformation Methods on Reference EEG Dataset Index 0 ($N = 512$)*
-| Transformation Method | Paradigm / Family | Dimensions | Bit-Exact (%) | $\text{RMSE}_{\text{rec}}$ | $\text{PRD}$ (%) | Max Jump $L_1$ | $r_{2D} (\uparrow)$ | $\text{TV}_{\text{norm}} (\downarrow)$ | File Size | Round-Trip | Selection Outcome |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Hilbert RGBA PNG** | **Space-Filling** | **`32×32×4`** | **100%** | **0.000000** | **0.0000%** | **1 px** | **0.8228** | **0.3572** | **2.10 KB** | **0.375 ms** | **Selected (Optimal)** |
-| Square Spiral RGBA PNG | Spiral Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 1 px | 0.5409 | 0.6020 | 2.12 KB | 0.311 ms | Eliminated Stage 3 (Low $r_{2D}$) |
-| Morton / Z-Order RGBA | Space-Filling | `32×32×4` | 100% | 0.000000 | 0.0000% | 16 px | 0.8172 | 0.3818 | 2.01 KB | 0.227 ms | Eliminated Stage 2 (16-px jump) |
-| Raster RGBA PNG | Spatial Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 32 px | 0.7205 | 0.4655 | 1.99 KB | 0.220 ms | Eliminated Stage 2 (32-px tear) |
-| Raster Gray8 PNG [7] | Spatial Folding | `32×32` | 0% | 0.010920 | 0.5996% | 32 px | 0.7205 | 0.4655 | 0.48 KB | 0.147 ms | Eliminated Stages 1 & 2 (Lossy) |
-| STFT Mag + Griffin-Lim | Time-Frequency | `33×33` | 0% | 2.662886 | 146.2180% | — | 0.8550 | 0.1627 | 4.48 KB | 13.546 ms | Eliminated Stage 1 (Phase loss) |
-| CWT Morlet Scalogram | Time-Frequency | `32×512` | 0% | 1.512942 | 83.0751% | — | 0.9625 | 0.1107 | 65.66 KB | 1.823 ms | Eliminated Stage 1 (Lossy ICWT) |
-| GASF ($N \times N$) | Dynamic Field | `512×512` | 0% | 0.000002 | 0.00009% | — | 0.9911 | 0.0883 | 1048.70 KB | 3.182 ms | Eliminated Stage 1 ($500\times$ size) |
-| MTF / Recurrence Plot | Dynamic Field | `512×512` | 0% | Non-Inv | Non-Inv | — | 0.8260 | 0.2406 | 1048.70 KB | — | Eliminated Stage 1 (Non-Inv) |
-| Direct Polar / Sector | Circular Mapping | `64×64` | 0% | 0.133–0.349 | 7.31–19.17% | 4–8 px | 0.47–0.81 | 0.24–0.28 | 16.50 KB | 0.280 ms | Eliminated Stage 1 (Pole/Seam) |
-| Fermat / Vogel Spiral | Circular Mapping | `64×64` | 100% | 0.000000 | 0.0000% | 3–76 px | 0.16 / -0.00 | 0.54–0.63 | 16.50 KB | 0.250 ms | Eliminated Stages 2 & 3 (Jumps) |
+*Table 2: Quantitative Benchmark of 12 Global 1D-to-2D Transformation Methods on Reference EEG Dataset Index 0 ($N = 512$)*
+| No | Transformation Method | Paradigm / Family | Image Dimensions | Reconstruction Property (Bit-Exact) | Reconstruction Error (RMSE) | Maximum Step | 2D Spatial Correlation | File Size per Signal |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1** | **Hilbert RGBA PNG (Selected)** | **Space-Filling** | **`32x32x4`** | **100% (Lossless)** | **0.000000** | **1 pixel** | **0.8228** | **2.10 KB** |
+| 2 | Square Spiral RGBA PNG | Spiral Folding | `32x32x4` | 100% (Lossless) | 0.000000 | 1 pixel | 0.5409 | 2.12 KB |
+| 3 | Morton / Z-Order RGBA PNG | Space-Filling | `32x32x4` | 100% (Lossless) | 0.000000 | 16 pixels | 0.8172 | 2.01 KB |
+| 4 | Raster RGBA PNG | Spatial Folding | `32x32x4` | 100% (Lossless) | 0.000000 | 32 pixels | 0.7205 | 1.99 KB |
+| 5 | Raster Grayscale 8-bit PNG [7] | Spatial Folding | `32x32` | 0% (Lossy) | 0.010920 | 32 pixels | 0.7205 | 0.48 KB |
+| 6 | SWT 2D Coeffs (Haar 4L) [13] | Time-Frequency | `5x512` (`.npy`) | 0% (Lossy)* | 0.000000* | — | 0.6782 | 10.37 KB |
+| 7 | STFT Complex (R+I+L) | Time-Frequency | `3x33x33` (`.npy`) | 0% (Lossy)* | 0.000000* | — | 0.8550 | 13.20 KB |
+| 8 | STFT Mag + Griffin-Lim | Time-Frequency | `33x33` (`.npy`) | 0% (Lossy) | 2.662886 | — | 0.8550 | 4.48 KB |
+| 9 | CWT Scalogram (Morlet) | Time-Frequency | `32x512` (`.npy`) | 0% (Lossy) | 1.512942 | — | 0.9625 | 65.66 KB |
+| 10 | GASF ([0,1] Best-Case) | Dynamic Field | `512x512` (`.npy`) | 0% (Lossy) | 0.000002 | — | 0.9911 | 1048.70 KB |
+| 11 | MTF (Markov Field) | Dynamic Field | `512x512` (`.npy`) | 0% (Non-Invertible) | Non-Invertible | — | 0.8260 | 1048.70 KB |
+| 12 | Recurrence Plot (RP) | Dynamic Field | `512x512` (PNG) | 0% (Non-Invertible) | Non-Invertible | — | 0.6431 | 18.48 KB |
+
+*Table 4: Quantitative Benchmark of 14 Circular Mapping Variants on Reference EEG Dataset Index 0 ($N = 512$, $64 \times 64$ Canvas)*
+| No | Candidate Transformation Method | Mechanism Group | Image Dimensions | Reconstruction Property (Bit-Exact) | Reconstruction Error (RMSE) | Maximum Step | 2D Spatial Correlation | File Size per Signal |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| | **GROUP 1: NATIVE VARIABLE-LENGTH** | | | | | | | |
+| 1 | Direct Polar Plot | Variable-Length | `64x64` | 0% (Lossy) | 0.133059 | 4 pixels | 0.4741 | 1.42 KB |
+| 2 | Archimedean Spiral | Variable-Length | `64x64` | 0% (Lossy) | 0.481926 | 5 pixels | 0.1637 | 2.40 KB |
+| 3 | Fermat Spiral | Variable-Length | `64x64` | 100% (Lossless) | 0.000000 | 3 pixels | 0.1625 | 2.78 KB |
+| 4 | Vogel / Golden Spiral | Variable-Length | `64x64` | 100% (Lossless) | 0.000000 | 76 pixels | -0.0001 | 2.88 KB |
+| 5 | Symmetric Dot (SDP) | Variable-Length | `64x64` | 0% (Non-Invertible) | Non-Invertible | — | 0.7678 | 2.18 KB |
+| 6 | Hilbert Polar Map | Variable-Length | `64x64` | 0% (Lossy) | 0.063951 | 10 pixels | 0.2607 | 1.64 KB |
+| 7 | Poincaré Polar Map | Variable-Length | `64x64` | 0% (Non-Invertible) | Non-Invertible | — | 0.7295 | 0.67 KB |
+| 8 | Complex FFT Polar | Variable-Length | `64x64` | 0% (Lossy) | 1.363625 | 50 pixels | 0.3285 | 1.06 KB |
+| 9 | Learnable Polar Map | Variable-Length | `64x64` | 0% (Lossy) | 0.545156 | 9 pixels | 0.0776 | 2.61 KB |
+| | **GROUP 2: FIXED-GRID** | | | | | | | |
+| 10 | Polar Sector / Grid | Fixed-Grid | `64x64` | 0% (Lossy) | 0.349102 | 8 pixels | 0.8105 | 4.96 KB |
+| 11 | Concentric Ring | Fixed-Grid | `64x64` | 0% (Lossy) | 0.295122 | 7 pixels | 0.1754 | 2.43 KB |
+| 12 | Adaptive Polar-GAF | Fixed-Grid | `64x64` | 0% (Lossy) | 2.691449 | — | 0.2601 | 2.07 KB |
+| 13 | Polar Recurrence Plot | Fixed-Grid | `64x64` | 0% (Non-Invertible) | Non-Invertible | — | 0.2000 | 0.25 KB |
+| 14 | Polar Scalogram | Fixed-Grid | `64x64` | 0% (Lossy) | 1.631531 | — | 0.4221 | 8.00 KB |
 
 ---
 
@@ -289,7 +310,7 @@ $$\mathbf{G}_{1, r_d, c_d} = \begin{cases} 1.0, & \text{if } 0 \le d < N \quad (
 Providing **Channel 1 (Binary Active Mask)** supplies explicit spatial boundary conditioning to $3 \times 3$ convolutional filters and Group Normalization layers, preventing zero-valued padding pixels from skewing feature statistics or being misinterpreted as flat $0\,\mu\text{V}$ cerebral activity.
 
 #### 2.5.2. 2D Hilbert Residual U-Net (`HilbertUNet`) and False-Neighbor Mitigation
-The proposed **`HilbertUNet`** is a lightweight, symmetric residual encoder-decoder architecture comprising **$786,241$ trainable parameters** ($\approx 3.0\text{ MB}$), as detailed in **Table 3**. Its core architectural components are tailored to the topological properties of Hilbert-mapped EEG grids:
+The proposed **`HilbertUNet`** is a lightweight, symmetric residual encoder-decoder architecture comprising **$786,241$ trainable parameters** ($\approx 3.0\text{ MB}$), as detailed in **Table 4**. Its core architectural components are tailored to the topological properties of Hilbert-mapped EEG grids:
 
 1. **Pre-Activation Residual Blocks with GroupNorm and GELU (`ResBlock2D`):**  
    Each residual block computes $\mathbf{z}_{\text{out}} = \mathbf{z}_{\text{in}} + \mathcal{F}(\mathbf{z}_{\text{in}})$ using two sequential `[GroupNorm(8) → GELU → Conv2d(3×3, pad=1)]` units separated by spatial dropout `Dropout2d(p=0.05)`. Group Normalization (8 channel groups) is adopted over Batch Normalization so that feature normalization is computed per individual sample, ensuring stable single-sample ($bs=1$) real-time inference. The **Gaussian Error Linear Unit (GELU)** activation ($\text{GELU}(z) = z \cdot \Phi(z)$) replaces standard ReLU to preserve negative-polarity EEG troughs without zero-clipping dead neurons.
@@ -304,7 +325,7 @@ $$\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\fr
 4. **Symmetric Decoder and Lateral Skip Connections:**  
    Three decoder stages (`Decoder 3–1`) restore spatial resolution ($4 \times 4 \to 8 \times 8 \to 16 \times 16 \to 32 \times 32$) via transposed convolutions `ConvTranspose2d(kernel=2, stride=2)`. At each scale, upsampled features are concatenated with lateral skip connections from the corresponding encoder stage, fused via `Conv2d(1×1)`, and refined by a `ResBlock2D` module. These lateral pathways preserve sharp, high-frequency cerebral waveform peaks during artifact suppression. Finally, a `Head Conv2d(1×1)` layer projects the 24 feature maps onto a single denoised spatial grid $\hat{\mathbf{G}}_0 \in \mathbb{R}^{B \times 1 \times 32 \times 32}$.
 
-*Table 3: Layer-by-Layer Architectural Specification of the Proposed `HilbertUNet` 2D Network ($786,241$ Parameters)*
+*Table 4: Layer-by-Layer Architectural Specification of the Proposed `HilbertUNet` 2D Network ($786,241$ Parameters)*
 | Module / Stage | Layer Configuration & Operators | Input Tensor Shape | Output Tensor Shape | Physical & Architectural Role |
 | :--- | :--- | :---: | :---: | :--- |
 | **Input & Stem** | `Conv2d(2, 24, k=3, s=1, p=1)` | $(B, 2, 32, 32)$ | $(B, 24, 32, 32)$ | Joint feature projection of amplitude & active mask |

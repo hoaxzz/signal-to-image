@@ -189,22 +189,43 @@ $$\text{TV}_{\text{norm}} = \frac{\sum_{(r,c) \in \Omega_{\text{aktif}}} \left( 
 di mana $\bar{I}$ dan $\sigma_I$ masing-masing menyatakan rerata dan simpangan baku amplitudo pada area sinyal aktif.
 
 #### 2.3.3. Empirical Selection Results and Justification of the Winning Representation
-Hasil evaluasi kuantitatif pada **Tabel 2** menunjukkan bahwa dari 26 metode yang diuji, sebanyak 20 metode gugur pada Babak 1 karena bersifat *non-invertible* (MTF, RP, SDP, Poincaré, Polar RP), mengalami kerusakan fase atau distorsi interpolasi kutub (STFT Griffin-Lim $\text{PRD} = 146.22\%$, CWT Morlet $\text{PRD} = 83.08\%$, Complex FFT Polar $\text{PRD} = 74.88\%$, Polar Sector $\text{PRD} = 19.17\%$), terkena galat kuantisasi 8-bit (Raster Gray8 $\text{PRD} = 0.60\%$), atau mengalami pembengkakan memori ekstrem tanpa format PNG portabel (GASF $1.048.70\text{ KB}$). Pada Babak 2, metode Raster RGBA (`Max Jump = 32 px`), Morton RGBA (`Max Jump = 16 px`), Fermat Spiral (`Max Jump = 3 px`), dan Vogel Spiral (`Max Jump = 76 px`, $r_{2D} = -0.0001$) tereliminasi akibat terputusnya kontinuitas jalur waktu. Akhirnya, pada Babak 3, **Hilbert RGBA PNG ($32 \times 32 \times 4$)** mengungguli Square Spiral RGBA PNG secara telak dengan korelasi spasial $r_{2D} = \mathbf{0.8228}$ (berbanding $0.5409$) dan kehalusan $\text{TV}_{\text{norm}} = \mathbf{0.3572}$ (berbanding $0.6020$), sehingga ditetapkan sebagai metode transformasi utama.
+Hasil evaluasi kuantitatif pada **Tabel 2** dan **Tabel 3** menunjukkan bahwa dari 26 metode yang diuji, sebanyak 20 metode gugur pada Babak 1 karena bersifat *non-invertible* (MTF, RP, SDP, Poincaré, Polar RP), mengalami kerusakan fase atau distorsi interpolasi kutub (STFT Griffin-Lim $\text{PRD} = 146.22\%$, CWT Morlet $\text{PRD} = 83.08\%$, Complex FFT Polar $\text{PRD} = 74.88\%$, Polar Sector $\text{PRD} = 19.17\%$), terkena galat kuantisasi 8-bit (Raster Gray8 $\text{PRD} = 0.60\%$), atau mengalami pembengkakan memori ekstrem tanpa format PNG portabel (GASF $1.048.70\text{ KB}$). Pada Babak 2, metode Raster RGBA (`Max Jump = 32 px`), Morton RGBA (`Max Jump = 16 px`), Fermat Spiral (`Max Jump = 3 px`), dan Vogel Spiral (`Max Jump = 76 px`, $r_{2D} = -0.0001$) tereliminasi akibat terputusnya kontinuitas jalur waktu. Akhirnya, pada Babak 3, **Hilbert RGBA PNG ($32 \times 32 \times 4$)** mengungguli Square Spiral RGBA PNG secara telak dengan korelasi spasial $r_{2D} = \mathbf{0.8228}$ (berbanding $0.5409$) dan kehalusan $\text{TV}_{\text{norm}} = \mathbf{0.3572}$ (berbanding $0.6020$), sehingga ditetapkan sebagai metode transformasi utama.
 
-*Tabel 2: Perbandingan Kuantitatif Perwakilan Metode Transformasi 1D-ke-2D pada Sinyal EEG Acuan Dataset Index 0 ($N = 512$)*
-| Metode Transformasi | Rumpun / Kategori | Dimensi | Bit-Exact (%) | $\text{RMSE}_{\text{rec}}$ | $\text{PRD}$ (%) | Max Jump $L_1$ | $r_{2D} (\uparrow)$ | $\text{TV}_{\text{norm}} (\downarrow)$ | Ukuran Berkas | Waktu Round-Trip | Keputusan Seleksi |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Hilbert RGBA PNG** | **Space-Filling** | **`32×32×4`** | **100%** | **0.000000** | **0.0000%** | **1 px** | **0.8228** | **0.3572** | **2.10 KB** | **0.375 ms** | **Terpilih (Unggul Mutlak)** |
-| Square Spiral RGBA PNG | Spiral Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 1 px | 0.5409 | 0.6020 | 2.12 KB | 0.311 ms | Gugur Babak 3 ($r_{2D}$ rendah) |
-| Morton / Z-Order RGBA | Space-Filling | `32×32×4` | 100% | 0.000000 | 0.0000% | 16 px | 0.8172 | 0.3818 | 2.01 KB | 0.227 ms | Gugur Babak 2 (Lompatan 16 px) |
-| Raster RGBA PNG | Spatial Folding | `32×32×4` | 100% | 0.000000 | 0.0000% | 32 px | 0.7205 | 0.4655 | 1.99 KB | 0.220 ms | Gugur Babak 2 (Robekan 32 px) |
-| Raster Gray8 PNG [7] | Spatial Folding | `32×32` | 0% | 0.010920 | 0.5996% | 32 px | 0.7205 | 0.4655 | 0.48 KB | 0.147 ms | Gugur Babak 1 & 2 (Lossy 8-bit) |
-| STFT Mag + Griffin-Lim | Time-Frequency | `33×33` | 0% | 2.662886 | 146.2180% | — | 0.8550 | 0.1627 | 4.48 KB | 13.546 ms | Gugur Babak 1 (Distorsi fase) |
-| CWT Morlet Scalogram | Time-Frequency | `32×512` | 0% | 1.512942 | 83.0751% | — | 0.9625 | 0.1107 | 65.66 KB | 1.823 ms | Gugur Babak 1 (Galat inversi) |
-| GASF ($N \times N$) | Dynamic Field | `512×512` | 0% | 0.000002 | 0.00009% | — | 0.9911 | 0.0883 | 1048.70 KB | 3.182 ms | Gugur Babak 1 (Memori $500\times$) |
-| MTF / Recurrence Plot | Dynamic Field | `512×512` | 0% | Non-Inv | Non-Inv | — | 0.8260 | 0.2406 | 1048.70 KB | — | Gugur Babak 1 (Non-Invertible) |
-| Direct Polar / Sector | Circular Mapping | `64×64` | 0% | 0.133–0.349 | 7.31–19.17% | 4–8 px | 0.47–0.81 | 0.24–0.28 | 16.50 KB | 0.280 ms | Gugur Babak 1 (Singularitas/Seam) |
-| Fermat / Vogel Spiral | Circular Mapping | `64×64` | 100% | 0.000000 | 0.0000% | 3–76 px | 0.16 / -0.00 | 0.54–0.63 | 16.50 KB | 0.250 ms | Gugur Babak 2 & 3 (Hamburan titik) |
+*Tabel 2: Hasil Eksperimen Perbandingan 12 Metode Transformasi Sinyal 1D-ke-2D Global pada Sinyal EEG Dataset Index 0 ($N=512$)*
+| No | Kandidat Metode Transformasi | Rumpun Metode | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Langkah Maksimum | Korelasi Spasial 2D | Ukuran Berkas per Sinyal |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1** | **Hilbert RGBA PNG (Dipilih)** | **Space-Filling** | **`32x32x4`** | **100% (Lossless)** | **0,000000** | **1 piksel** | **0,8228** | **2,10 KB** |
+| 2 | Square Spiral RGBA PNG | Spiral Folding | `32x32x4` | 100% (Lossless) | 0,000000 | 1 piksel | 0,5409 | 2,12 KB |
+| 3 | Morton / Z-Order RGBA PNG | Space-Filling | `32x32x4` | 100% (Lossless) | 0,000000 | 16 piksel | 0,8172 | 2,01 KB |
+| 4 | Raster RGBA PNG | Spatial Folding | `32x32x4` | 100% (Lossless) | 0,000000 | 32 piksel | 0,7205 | 1,99 KB |
+| 5 | Raster Grayscale 8-bit PNG [7] | Spatial Folding | `32x32` | 0% (Lossy) | 0,010920 | 32 piksel | 0,7205 | 0,48 KB |
+| 6 | SWT 2D Coeffs (Haar 4L) [13] | Time-Frequency | `5x512` (`.npy`) | 0% (Lossy)* | 0,000000* | — | 0,6782 | 10,37 KB |
+| 7 | STFT Complex (R+I+L) | Time-Frequency | `3x33x33` (`.npy`) | 0% (Lossy)* | 0,000000* | — | 0,8550 | 13,20 KB |
+| 8 | STFT Mag + Griffin-Lim | Time-Frequency | `33x33` (`.npy`) | 0% (Lossy) | 2,662886 | — | 0,8550 | 4,48 KB |
+| 9 | CWT Scalogram (Morlet) | Time-Frequency | `32x512` (`.npy`) | 0% (Lossy) | 1,512942 | — | 0,9625 | 65,66 KB |
+| 10 | GASF ([0,1] Best-Case) | Dynamic Field | `512x512` (`.npy`) | 0% (Lossy) | 0,000002 | — | 0,9911 | 1.048,70 KB |
+| 11 | MTF (Markov Field) | Dynamic Field | `512x512` (`.npy`) | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,8260 | 1.048,70 KB |
+| 12 | Recurrence Plot (RP) | Dynamic Field | `512x512` (PNG) | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,6431 | 18,48 KB |
+
+*Tabel 4: Hasil Eksperimen Perbandingan 14 Varian Circular Mapping pada Sinyal EEG Dataset Index 0 ($N=512$, Kanvas $64 \times 64$)*
+| No | Kandidat Metode Transformasi | Kelompok Mekanisme | Dimensi Citra | Sifat Rekonstruksi (Bit-Exact) | Galat Rekonstruksi (RMSE) | Langkah Maksimum | Korelasi Spasial 2D | Ukuran Berkas per Sinyal |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| | **KELOMPOK 1: LANGSUNG VARIABEL** | | | | | | | |
+| 1 | Direct Polar Plot | Langsung Variabel | `64x64` | 0% (Lossy) | 0,133059 | 4 piksel | 0,4741 | 1,42 KB |
+| 2 | Archimedean Spiral | Langsung Variabel | `64x64` | 0% (Lossy) | 0,481926 | 5 piksel | 0,1637 | 2,40 KB |
+| 3 | Fermat Spiral | Langsung Variabel | `64x64` | 100% (Lossless) | 0,000000 | 3 piksel | 0,1625 | 2,78 KB |
+| 4 | Vogel / Golden Spiral | Langsung Variabel | `64x64` | 100% (Lossless) | 0,000000 | 76 piksel | -0,0001 | 2,88 KB |
+| 5 | Symmetric Dot (SDP) | Langsung Variabel | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7678 | 2,18 KB |
+| 6 | Hilbert Polar Map | Langsung Variabel | `64x64` | 0% (Lossy) | 0,063951 | 10 piksel | 0,2607 | 1,64 KB |
+| 7 | Poincaré Polar Map | Langsung Variabel | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,7295 | 0,67 KB |
+| 8 | Complex FFT Polar | Langsung Variabel | `64x64` | 0% (Lossy) | 1,363625 | 50 piksel | 0,3285 | 1,06 KB |
+| 9 | Learnable Polar Map | Langsung Variabel | `64x64` | 0% (Lossy) | 0,545156 | 9 piksel | 0,0776 | 2,61 KB |
+| | **KELOMPOK 2: GRID TETAP** | | | | | | | |
+| 10 | Polar Sector / Grid | Grid Tetap | `64x64` | 0% (Lossy) | 0,349102 | 8 piksel | 0,8105 | 4,96 KB |
+| 11 | Concentric Ring | Grid Tetap | `64x64` | 0% (Lossy) | 0,295122 | 7 piksel | 0,1754 | 2,43 KB |
+| 12 | Adaptive Polar-GAF | Grid Tetap | `64x64` | 0% (Lossy) | 2,691449 | — | 0,2601 | 2,07 KB |
+| 13 | Polar Recurrence Plot | Grid Tetap | `64x64` | 0% (Non-Invertible) | Tidak Dapat Dibalik | — | 0,2000 | 0,25 KB |
+| 14 | Polar Scalogram | Grid Tetap | `64x64` | 0% (Lossy) | 1,631531 | — | 0,4221 | 8,00 KB |
 
 ---
 
@@ -292,7 +313,7 @@ $$\mathbf{G}_{1, r_d, c_d} = \begin{cases} 1.0, & \text{jika } 0 \le d < N \quad
 Kehadiran **Kanal 1 (Masker Biner Sinyal Aktif)** berfungsi sebagai indikator batas spasial eksplisit bagi filter konvolusi $3 \times 3$ dan lapisan *Group Normalization*, sehingga mencegah jaringan menginterpretasikan angka nol pada zona *padding* sebagai aktivitas gelombang otak yang sedang datar ($0\,\mu\text{V}$).
 
 #### 2.5.2. 2D Hilbert Residual U-Net (`HilbertUNet`) and False-Neighbor Mitigation
-Arsitektur **`HilbertUNet`** dirancang sebagai jaringan *encoder-decoder* residual simetris berbobot ringan dengan total **$786.241$ parameter** ($\approx 3.0\text{ MB}$), sebagaimana dirinci pada **Tabel 3**. Pilihan desain komponen utama arsitektur ini didasarkan pada karakteristik fisis sinyal EEG pada kisi Hilbert:
+Arsitektur **`HilbertUNet`** dirancang sebagai jaringan *encoder-decoder* residual simetris berbobot ringan dengan total **$786.241$ parameter** ($\approx 3.0\text{ MB}$), sebagaimana dirinci pada **Tabel 4**. Pilihan desain komponen utama arsitektur ini didasarkan pada karakteristik fisis sinyal EEG pada kisi Hilbert:
 
 1. **Blok Residual dengan *Group Normalization* dan Aktivasi *GELU* (`ResBlock2D`):**  
    Setiap tahap pemrosesan dibangun dari blok residual $\mathbf{z}_{\text{out}} = \mathbf{z}_{\text{in}} + \mathcal{F}(\mathbf{z}_{\text{in}})$ yang memuat dua lapisan konvolusi $3 \times 3$, `GroupNorm(8)`, `Dropout2d(p=0.05)`, dan aktivasi `GELU`. *Group Normalization* (8 grup kanal) dipilih menggantikan *Batch Normalization* agar normalisasi fitur dihitung secara mandiri per sampel tanpa bergantung pada ukuran *batch*. Fungsi aktivasi **GELU** ($\text{GELU}(z) = z \cdot \Phi(z)$) digunakan menggantikan ReLU karena sinyal EEG berayun secara simetris di sekitar garis dasar nol (memiliki lembah negatif dan puncak positif); aktivasi ReLU konvensional mematikan seluruh ayunan negatif menjadi nol, sedangkan GELU mempertahankan aliran gradien yang halus pada nilai negatif kecil.
@@ -307,7 +328,7 @@ $$\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \text{softmax}\left(\fr
 4. **Dekoder Simetris dan *Lateral Skip Connections*:**  
    Tiga tingkat dekoder (`Decoder 3–1`) menaikkan kembali resolusi spasial ($4 \times 4 \to 8 \times 8 \to 16 \times 16 \to 32 \times 32$) melalui `ConvTranspose2d(kernel=2, stride=2)`. Pada setiap tingkatan, peta fitur digabungkan (*concatenated*) dengan peta fitur enkoder selevel melalui jalur pintas (*skip connections*), direduksi menggunakan `Conv2d(1×1)`, dan diproses oleh `ResBlock2D`. Jalur pintas ini menyalurkan kembali detail morfologi frekuensi tinggi langsung dari enkoder sehingga puncak tajam gelombang EEG tidak mengalami penghalusan berlebih (*over-smoothing*). Lapisan akhir `Head Conv2d(1×1)` memproyeksikan fitur menjadi kisi estimasi sinyal bersih $\hat{\mathbf{G}}_0 \in \mathbb{R}^{B \times 1 \times 32 \times 32}$.
 
-*Tabel 3: Spesifikasi Arsitektur dan Konfigurasi Tensor pada Jaringan `HilbertUNet` 2D (Total Parameter: $786.241$)*
+*Tabel 4: Spesifikasi Arsitektur dan Konfigurasi Tensor pada Jaringan `HilbertUNet` 2D (Total Parameter: $786.241$)*
 | Modul / Tahap | Konfigurasi Lapisan & Operator | Tensor Masukan | Tensor Keluaran | Peran Fisis pada Restorasi Sinyal |
 | :--- | :--- | :---: | :---: | :--- |
 | **Input & Stem** | `Conv2d(2, 24, k=3, s=1, p=1)` | $(B, 2, 32, 32)$ | $(B, 24, 32, 32)$ | Proyeksi awal bidang amplitudo & masker aktif |
